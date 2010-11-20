@@ -1,0 +1,8 @@
+#summary 이 프로젝트의 목표를 명시 한다.
+#labels Phase-Requirements
+
+= 목표 =
+HEVC에 Multi view video coding 기능을 추가 한다.
+
+= 요구 사항 =
+ # Inter-view prediction
