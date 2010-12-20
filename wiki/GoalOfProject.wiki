@@ -4,5 +4,10 @@
 = 목표 =
 HEVC에 Multi view video coding 기능을 추가 한다.
 
-= 요구 사항 =
- # Inter-view prediction
+= 개요 =
+최근 표준화를 진행 중인 HEVC에 H.264에 적용 된 Multi view video coding 기능을 Poring 한다.
+HEVC에 목표로 하는 기능을 추가하기 위해서는 다음의 두 가지 추가 coding tools이 필요하다.
+
+= 추가 Coding Tools =
+ # Hierarchical B coding structure.
+ # Inter-view prediction.
