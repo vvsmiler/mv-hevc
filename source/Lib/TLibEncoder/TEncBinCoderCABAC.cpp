@@ -41,9 +41,11 @@ TEncBinCABAC::TEncBinCABAC()
 {
 }
 
+
 TEncBinCABAC::~TEncBinCABAC()
 {
 }
+
 
 Void
 TEncBinCABAC::init( TComBitIf* pcTComBitIf )
@@ -51,11 +53,13 @@ TEncBinCABAC::init( TComBitIf* pcTComBitIf )
   m_pcTComBitIf = pcTComBitIf;
 }
 
+
 Void
 TEncBinCABAC::uninit()
 {
   m_pcTComBitIf = 0;
 }
+
 
 Void
 TEncBinCABAC::start()
@@ -66,6 +70,7 @@ TEncBinCABAC::start()
   m_uiByte          = 0;
   m_uiBitsLeft      = 9;
 }
+
 
 Void
 TEncBinCABAC::finish()
@@ -78,6 +83,7 @@ TEncBinCABAC::finish()
     m_pcTComBitIf->write  ( m_uiByte, 8 - m_uiBitsLeft );
   }
 }
+
 
 Void
 TEncBinCABAC::copyState( TEncBinIf* pcTEncBinIf )
@@ -99,15 +105,18 @@ TEncBinCABAC::resetBits()
   m_uiBitsLeft      = 9;
 }
 
+
 UInt
 TEncBinCABAC::getNumWrittenBits()
 {
   return m_pcTComBitIf->getNumberOfWrittenBits() + 8 + m_uiBitsToFollow - m_uiBitsLeft + 1;
 }
 
+
 Void
 TEncBinCABAC::encodeBin( UInt uiBin, ContextModel &rcCtxModel )
 {
+#if HHI_RQT
   {
     DTRACE_CABAC_V( g_nSymbolCounter++ )
     DTRACE_CABAC_T( "\tstate=" )
@@ -116,6 +125,7 @@ TEncBinCABAC::encodeBin( UInt uiBin, ContextModel &rcCtxModel )
     DTRACE_CABAC_V( uiBin )
     DTRACE_CABAC_T( "\n" )
   }
+#endif
   UInt  uiLPS   = TComCABACTables::sm_aucLPSTable[ rcCtxModel.getState() ][ ( m_uiRange >> 6 ) & 3 ];
   m_uiRange    -= uiLPS;
   if( uiBin != rcCtxModel.getMps() )
@@ -149,15 +159,18 @@ TEncBinCABAC::encodeBin( UInt uiBin, ContextModel &rcCtxModel )
   }
 }
 
+
 Void
 TEncBinCABAC::encodeBinEP( UInt uiBin )
 {
+#if HHI_RQT
   {
     DTRACE_CABAC_V( g_nSymbolCounter++ )
     DTRACE_CABAC_T( "\tEPsymbol=" )
     DTRACE_CABAC_V( uiBin )
     DTRACE_CABAC_T( "\n" )
   }
+#endif
   m_uiLow <<= 1;
   if( uiBin )
   {
@@ -178,6 +191,7 @@ TEncBinCABAC::encodeBinEP( UInt uiBin )
     m_uiLow         -= 512;
   }
 }
+
 
 Void
 TEncBinCABAC::encodeBinTrm( UInt uiBin )
@@ -209,6 +223,7 @@ TEncBinCABAC::encodeBinTrm( UInt uiBin )
   }
 }
 
+
 Void  
 TEncBinCABAC::xWriteBit( UInt uiBit )
 {
@@ -220,6 +235,7 @@ TEncBinCABAC::xWriteBit( UInt uiBit )
     m_uiByte      = 0;
   }
 }
+
 
 Void  
 TEncBinCABAC::xWriteBitAndBitsToFollow( UInt uiBit )

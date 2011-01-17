@@ -41,9 +41,11 @@ TDecBinCABAC::TDecBinCABAC()
 {
 }
 
+
 TDecBinCABAC::~TDecBinCABAC()
 {
 }
+
 
 Void
 TDecBinCABAC::init( TComBitstream* pcTComBitstream )
@@ -51,17 +53,19 @@ TDecBinCABAC::init( TComBitstream* pcTComBitstream )
   m_pcTComBitstream = pcTComBitstream;
 }
 
+
 Void
 TDecBinCABAC::uninit()
 {
   m_pcTComBitstream = 0;
 }
 
+
 Void
 TDecBinCABAC::start()
 {
   m_pcTComBitstream->setModeSbac();
-  
+
   m_uiRange    = 510;
   m_uiValue    = 0;
   for( UInt ui = 0; ui < 9; ui++ )
@@ -70,10 +74,12 @@ TDecBinCABAC::start()
   }
 }
 
+
 Void
 TDecBinCABAC::finish()
 {
 }
+
 
 Void
 TDecBinCABAC::decodeBin( UInt& ruiBin, ContextModel &rcCtxModel )
@@ -99,6 +105,7 @@ TDecBinCABAC::decodeBin( UInt& ruiBin, ContextModel &rcCtxModel )
   }
 }
 
+
 Void
 TDecBinCABAC::decodeBinEP( UInt& ruiBin )
 {
@@ -113,6 +120,7 @@ TDecBinCABAC::decodeBinEP( UInt& ruiBin )
     ruiBin      = 0;
   }
 }
+
 
 Void
 TDecBinCABAC::decodeBinTrm( UInt& ruiBin )
@@ -133,6 +141,7 @@ TDecBinCABAC::decodeBinTrm( UInt& ruiBin )
   }
 }
 
+
 Void  
 TDecBinCABAC::xReadBit( UInt& ruiVal )
 {
@@ -140,3 +149,8 @@ TDecBinCABAC::xReadBit( UInt& ruiVal )
   m_pcTComBitstream->read( 1, uiBit );
   ruiVal  = ( ruiVal << 1 ) | uiBit;
 }
+
+
+
+
+

@@ -44,7 +44,7 @@ class TDecBinCABAC : public TDecBinIf
 {
 public:
   TDecBinCABAC ();
-  virtual ~TDecBinCABAC();
+  ~TDecBinCABAC();
 
   Void  init              ( TComBitstream* pcTComBitstream );
   Void  uninit            ();

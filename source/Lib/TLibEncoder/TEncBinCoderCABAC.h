@@ -44,28 +44,28 @@ class TEncBinCABAC : public TEncBinIf
 {
 public:
   TEncBinCABAC ();
-  virtual ~TEncBinCABAC();
-  
+  ~TEncBinCABAC();
+
   Void  init              ( TComBitIf* pcTComBitIf );
   Void  uninit            ();
-  
+
   Void  start             ();
   Void  finish            ();
   Void  copyState         ( TEncBinIf* pcTEncBinIf );
-  
+
   Void  resetBits         ();
   UInt  getNumWrittenBits ();
-  
+
   Void  encodeBin         ( UInt  uiBin,  ContextModel& rcCtxModel );
   Void  encodeBinEP       ( UInt  uiBin                            );
   Void  encodeBinTrm      ( UInt  uiBin                            );
-  
+
   TEncBinCABAC* getTEncBinCABAC()  { return this; }
-  
-protected:
+
+protected: // defined as protected for TEncBinCABAC4V2V
   Void  xWriteBit               ( UInt uiBit );
   Void  xWriteBitAndBitsToFollow( UInt uiBit );
-  
+
 private:
   TComBitIf*          m_pcTComBitIf;
   UInt                m_uiLow;
