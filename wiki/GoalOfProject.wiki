@@ -9,12 +9,12 @@ HEVC에 Multi view video coding 기능을 추가 한다.
 HEVC에 목표로 하는 기능을 추가하기 위해서는 다음의 두 가지 추가 coding tools이 필요하다.
 
 = 기존 Video Coding Flow와 다른 점 =
-* Encoder
-# NAL Header에 MVC 관련 추가 변수.
-# SPS에 MVC 관련 추가 변수.
-# Slice Header MVC 관련 추가 변수.
-# Slice Header의 Reference Picture Order Modify 기능에 MVC 고려.
-# 여러 채널의 Bitstream을 하나의 Bitstream으로 Assembly
-* Decoder
-# 여러 view의 SPS/PPS 유지.
-# 여러 view의 Reference Picture 유지.
+  * Encoder
+  # NAL Header에 MVC 관련 추가 변수.
+  # SPS에 MVC 관련 추가 변수.
+  # Slice Header MVC 관련 추가 변수.
+  # Slice Header의 Reference Picture Order Modify 기능에 MVC 고려.
+  # 여러 채널의 Bitstream을 하나의 Bitstream으로 Assembly
+  * Decoder
+  # 여러 view의 SPS/PPS 유지.
+  # 여러 view의 Reference Picture 유지.
