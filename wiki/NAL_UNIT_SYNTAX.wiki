@@ -18,7 +18,7 @@ AVC의 NAL unit syntax
 |  nal_unit_type                                                  | All | u(5)       |
 |  NumBytesInRBSP = 0                                             |     |            |
 |  nalUnitHeaderBytes = 1                                         |     |            |
-|  if( nal_unit_type == 14 | nal_unit_type == 20) {               |     |            |
+|  if( nal_unit_type == 14 || nal_unit_type == 20) {              |     |            |
 |    svc_extension_flag                                           | All | u(1)       |
 |    if( svc_extension_flag )                                     |     |            |
 |      nal_unit_header_svc_extension() // specified in Annex G    | All |            |
@@ -59,7 +59,7 @@ HEVC의 NAL unit syntax
 |  nal_unit_type                                                  | u(5)       |
 |  NumBytesInRBSP = 0                                             |            |
 |  nalUnitHeaderBytes = 1                                         |            |
-|  if( nal_unit_type == 1 | nal_unit_type == 5) {                 |            |
+|  if( nal_unit_type == 1 || nal_unit_type == 5) {                |            |
 |    temporal_flag                                                | u(3)       |
 |    output_flag                                                  | u(1)       |
 |    reserved_zero_4bits                                          | u(4)       |
@@ -77,8 +77,29 @@ HEVC의 NAL unit syntax
 |}                                                                |            |
 }}}
 
-
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+위의 HEVC의 NAL unit syntax에 MVC extension syntax를 적용 해 보면 다음과 같다.
+{{{
+|nal_unit( NumBytesInNALunit ) {                                  | Descriptor |
+|  forbidden_zero_bit                                             | f(1)       |
+|  nal_ref_idc                                                    | u(2)       |
+|  nal_unit_type                                                  | u(5)       |
+|  NumBytesInRBSP = 0                                             |            |
+|  nalUnitHeaderBytes = 1                                         |            |
+|  if( nal_unit_type == 1 | nal_unit_type == 5) {                 |            |
+|    temporal_flag                                                | u(3)       |
+|    output_flag                                                  | u(1)       |
+|    reserved_zero_4bits                                          | u(4)       |
+|    nalUnitHeaderBytes += 1                                      |            |
+|  } else if( nal_unit_type == 14 )                               |            |
+|      nal_unit_header_mvc_extension()                            |            |
+|  for( i=nalUnitHeaderBytes; i<NumBytesInNALunit; i++ ) {        |            |
+|    if( i+2<NumBytesInNALunit && next_bits(24) == 0x000003) {    |            |
+|      rbsp_byte[NumBytesInRBSP++]                                | b(8)       |
+|      rbsp_byte[NumBytesInRBSP++]                                | b(8)       |
+|      i += 2                                                     |            |
+|      emulation_prevention_three_byte // equal to 0x03           | f(8)       |
+|    } else                                                       |            |
+|      rbsp_byte[NumBytesInRBSP++]                                | b(8)       |
+|  }                                                              |            |
+|}                                                                |            |
+}}}
