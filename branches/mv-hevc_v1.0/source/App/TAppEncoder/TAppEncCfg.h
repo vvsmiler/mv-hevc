@@ -134,6 +134,22 @@ protected:
 #ifdef ROUNDING_CONTROL_BIPRED
   Bool m_useRoundingControlBipred;
 #endif
+
+public:
+  // for multiview
+  Bool		m_bMVC;
+  UInt		m_uiCurrentViewID;
+  UInt		m_uiProcessingViewID;
+  UInt		m_uiNumViewsMinusOne;
+  UInt		*m_auiViewOrder;			// i : view object index, a[i] : view object id
+  UInt		*m_auiNumAnchorRefsL0;		// i : view object index, a[i] : number of anchor view objects
+  UInt		*m_auiNumAnchorRefsL1;		// i : view object index, a[i] : number of anchor view objects
+  UInt		**m_aauiAnchorRefL0;		// i : view object index, j : anchor view object index, a[i][j] : anchor view object id
+  UInt		**m_aauiAnchorRefL1;		// i : view object index, j : anchor view object index, a[i][j] : anchor view object id
+  UInt		*m_auiNumNonAnchorRefsL0;	// i : view object index, a[i] : number of non-anchor view objects
+  UInt		*m_auiNumNonAnchorRefsL1;	// i : view object index, a[i] : number of non-anchor view objects
+  UInt		**m_aauiNonAnchorRefL0;		// i : view object index, j : non-anchor view object index, a[i][j] : non-anchor view object id
+  UInt		**m_aauiNonAnchorRefL1;		// i : view object index, j : non-anchor view object index, a[i][j] : non-anchor view object id
   
   // internal member functions
   Void  xSetGlobal      ();                                   ///< set global variables
