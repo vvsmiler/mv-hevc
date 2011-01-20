@@ -47,6 +47,262 @@
 using namespace std;
 namespace po = df::program_options_lite;
 
+//{ MVC
+class OptionMVC;
+struct OptionsMVC: public po::Options
+{
+	OptionsMVC(TAppEncCfg& AppEncCfg_) : AppEncCfg(AppEncCfg_) {}
+	OptionMVC addOptionsMVC();
+	TAppEncCfg& AppEncCfg;
+};
+
+struct OptionFuncMVC : public po::OptionBase
+{
+	typedef void (Func)(OptionFuncMVC&, const std::string&);
+
+	OptionFuncMVC(const std::string& name, OptionsMVC& parent_, Func *func_, const std::string& desc)
+		: po::OptionBase(name, desc), func(func_), parent(parent_)
+	{}
+
+	void parse(const std::string& arg)
+	{
+		func(*this, arg);
+	}
+
+	void setDefault()
+	{
+		return;
+	}
+
+	void (*func)(OptionFuncMVC&, const std::string&);
+	OptionsMVC& parent;
+};
+
+class OptionMVC
+{
+public:
+	OptionMVC(OptionsMVC& parent_) : parent(parent_) {}
+public:
+	template<typename T>
+	OptionMVC& operator()(const std::string& name, T& storage, T default_val, const std::string& desc = "")
+	{
+		parent.addOption(new po::Option<T>(name, storage, default_val, desc));
+		return *this;
+	}
+	OptionMVC& operator()(const std::string& name, OptionFuncMVC::Func *func, const std::string& desc = "")
+	{
+		parent.addOption(new OptionFuncMVC(name, parent, func, desc));
+		return *this;
+	}
+private:
+	OptionsMVC&	parent;
+};
+
+OptionMVC OptionsMVC::addOptionsMVC()
+{
+	return OptionMVC(*this);
+}
+
+void procOptionsMVC(OptionFuncMVC& opt, const string& val)
+{
+	TAppEncCfg& p = opt.parent.AppEncCfg;
+	if ( opt.opt_string == "NumViewsMinusOne" )
+	{
+		// TODO : 나중에 안정성 체크 해야한다.
+		p.m_bMVC					= true;
+		p.m_uiNumViewsMinusOne		= atoi(val.c_str());
+		p.m_auiViewOrder			= new UInt[p.m_uiNumViewsMinusOne+1];
+		p.m_auiNumAnchorRefsL0		= new UInt[p.m_uiNumViewsMinusOne+1];
+		p.m_auiNumAnchorRefsL1		= new UInt[p.m_uiNumViewsMinusOne+1];
+		p.m_aauiAnchorRefL0			= new UInt*[p.m_uiNumViewsMinusOne+1];
+		p.m_aauiAnchorRefL1			= new UInt*[p.m_uiNumViewsMinusOne+1];
+		p.m_auiNumNonAnchorRefsL0	= new UInt[p.m_uiNumViewsMinusOne+1];
+		p.m_auiNumNonAnchorRefsL1	= new UInt[p.m_uiNumViewsMinusOne+1];
+		p.m_aauiNonAnchorRefL0		= new UInt*[p.m_uiNumViewsMinusOne+1];
+		p.m_aauiNonAnchorRefL1		= new UInt*[p.m_uiNumViewsMinusOne+1];
+
+		for ( UInt i = 0;i <= p.m_uiNumViewsMinusOne; i++ )
+		{
+			p.m_auiViewOrder[i]=0;
+			p.m_auiNumAnchorRefsL0[i]=0;
+			p.m_auiNumAnchorRefsL1[i]=0;
+			p.m_aauiAnchorRefL0[i]=NULL;
+			p.m_aauiAnchorRefL1[i]=NULL;
+			p.m_auiNumNonAnchorRefsL0[i]=0;
+			p.m_auiNumNonAnchorRefsL1[i]=0;
+			p.m_aauiNonAnchorRefL0[i]=NULL;
+			p.m_aauiNonAnchorRefL1[i]=NULL;
+		}
+	}
+
+	if ( opt.opt_string == "ViewOrder" )
+	{
+		char ch[400];
+		char *pch;
+		UInt count = 0;
+
+		memcpy(ch, val.c_str(), val.size());
+		ch[val.size()] = '\0';
+
+		pch = strtok(ch, "-");  
+
+		while(pch != NULL)
+		{
+			p.m_auiViewOrder[count++] = atoi(pch);     
+			pch = strtok(NULL, "-");  
+		}
+	}
+
+	if ( opt.opt_string == "View_ID" )
+	{
+		p.m_uiProcessingViewID = atoi(val.c_str());
+	}
+
+	if ( opt.opt_string == "Fwd_NumAnchorRefs" )
+	{
+		// TODO : 나중에 안정성 체크 해야한다.
+		UInt i;
+		for ( i = 0; i <= p.m_uiNumViewsMinusOne; i++ )
+			if ( p.m_uiProcessingViewID == p.m_auiViewOrder[i]) break;
+		p.m_auiNumAnchorRefsL0[i] = atoi(val.c_str());
+		if ( p.m_auiNumAnchorRefsL0[i] != 0 )
+			p.m_aauiAnchorRefL0[i] = new UInt[p.m_auiNumAnchorRefsL0[i]];
+	}
+
+	if ( opt.opt_string == "Bwd_NumAnchorRefs" )
+	{
+		// TODO : 나중에 안정성 체크 해야한다.
+		UInt i;
+		for ( i = 0; i <= p.m_uiNumViewsMinusOne; i++ )
+			if ( p.m_uiProcessingViewID == p.m_auiViewOrder[i]) break;
+		p.m_auiNumAnchorRefsL1[i] = atoi(val.c_str());
+		if ( p.m_auiNumAnchorRefsL1[i] != 0 )
+			p.m_aauiAnchorRefL1[i] = new UInt[p.m_auiNumAnchorRefsL1[i]];
+	}
+
+	if ( opt.opt_string == "Fwd_NumNonAnchorRefs" )
+	{
+		// TODO : 나중에 안정성 체크 해야한다.
+		UInt i;
+		for ( i = 0; i <= p.m_uiNumViewsMinusOne; i++ )
+			if ( p.m_uiProcessingViewID == p.m_auiViewOrder[i]) break;
+		p.m_auiNumNonAnchorRefsL0[i] = atoi(val.c_str());
+		if ( p.m_auiNumNonAnchorRefsL0[i] != 0 )
+			p.m_aauiNonAnchorRefL0[i] = new UInt[p.m_auiNumNonAnchorRefsL0[i]];
+	}
+
+	if ( opt.opt_string == "Bwd_NumNonAnchorRefs" )
+	{
+		// TODO : 나중에 안정성 체크 해야한다.
+		UInt i;
+		for ( i = 0; i <= p.m_uiNumViewsMinusOne; i++ )
+			if ( p.m_uiProcessingViewID == p.m_auiViewOrder[i]) break;
+		p.m_auiNumNonAnchorRefsL1[i] = atoi(val.c_str());
+		if ( p.m_auiNumNonAnchorRefsL1[i] != 0 )
+			p.m_aauiNonAnchorRefL1[i] = new UInt[p.m_auiNumNonAnchorRefsL1[i]];
+	}
+
+	if ( opt.opt_string == "Fwd_AnchorRefs" )
+	{
+		// TODO : 나중에 안정성 체크 해야한다.
+		char ch[10];
+		char *pch;
+		UInt ref_idx;
+		UInt view_id;
+
+		UInt i;
+		for ( i = 0; i <= p.m_uiNumViewsMinusOne; i++ )
+			if ( p.m_uiProcessingViewID == p.m_auiViewOrder[i]) break;
+
+		if ( p.m_auiNumAnchorRefsL0[i] != 0 )
+		{
+			memcpy(ch, val.c_str(), val.size());
+			ch[val.size()] = '\0';
+			pch = strtok(ch, " ");
+			ref_idx = atoi(pch);
+			pch = strtok(NULL, " ");
+			view_id = atoi(pch);
+			p.m_aauiAnchorRefL0[i][ref_idx] = view_id;
+		}
+	}
+
+	if ( opt.opt_string == "Bwd_AnchorRefs" )
+	{
+		// TODO : 나중에 안정성 체크 해야한다.
+		char ch[10];
+		char *pch;
+		UInt ref_idx;
+		UInt view_id;
+
+		UInt i;
+		for ( i = 0; i <= p.m_uiNumViewsMinusOne; i++ )
+			if ( p.m_uiProcessingViewID == p.m_auiViewOrder[i]) break;
+
+		if ( p.m_auiNumAnchorRefsL1[i] != 0 )
+		{
+			memcpy(ch, val.c_str(), val.size());
+			ch[val.size()] = '\0';
+			pch = strtok(ch, " ");
+			ref_idx = atoi(pch);
+			pch = strtok(NULL, " ");
+			view_id = atoi(pch);
+			p.m_aauiAnchorRefL1[i][ref_idx] = view_id;
+		}
+	}
+
+	if ( opt.opt_string == "Fwd_NonAnchorRefs" )
+	{
+		// TODO : 나중에 안정성 체크 해야한다.
+		char ch[10];
+		char *pch;
+		UInt ref_idx;
+		UInt view_id;
+
+		UInt i;
+		for ( i = 0; i <= p.m_uiNumViewsMinusOne; i++ )
+			if ( p.m_uiProcessingViewID == p.m_auiViewOrder[i]) break;
+
+		if ( p.m_auiNumNonAnchorRefsL0[i] != 0 )
+		{
+			memcpy(ch, val.c_str(), val.size());
+			ch[val.size()] = '\0';
+			pch = strtok(ch, " ");
+			ref_idx = atoi(pch);
+			pch = strtok(NULL, " ");
+			view_id = atoi(pch);
+			p.m_aauiNonAnchorRefL0[i][ref_idx] = view_id;
+		}
+	}
+
+	if ( opt.opt_string == "Bwd_NonAnchorRefs" )
+	{
+		// TODO : 나중에 안정성 체크 해야한다.
+		char ch[10];
+		char *pch;
+		UInt ref_idx;
+		UInt view_id;
+
+		UInt i;
+		for ( i = 0; i <= p.m_uiNumViewsMinusOne; i++ )
+			if ( p.m_uiProcessingViewID == p.m_auiViewOrder[i]) break;
+
+		if ( p.m_auiNumNonAnchorRefsL1[i] != 0 )
+		{
+			memcpy(ch, val.c_str(), val.size());
+			ch[val.size()] = '\0';
+			pch = strtok(ch, " ");
+			ref_idx = atoi(pch);
+			pch = strtok(NULL, " ");
+			view_id = atoi(pch);
+			p.m_aauiNonAnchorRefL1[i][ref_idx] = view_id;
+		}
+	}
+}
+//} ~MVC
+
+
+
+
 /* configuration helper funcs */
 void doOldStyleCmdlineOn(po::Options& opts, const std::string& arg);
 void doOldStyleCmdlineOff(po::Options& opts, const std::string& arg);
@@ -79,6 +335,21 @@ TAppEncCfg::~TAppEncCfg()
 
 Void TAppEncCfg::create()
 {
+	//{ MVC
+	m_bMVC						= false;
+	m_uiCurrentViewID			= 100;
+	m_uiProcessingViewID		= 100;
+	m_uiNumViewsMinusOne		= 100;
+	m_auiViewOrder				= NULL;
+	m_auiNumAnchorRefsL0		= NULL;
+	m_auiNumAnchorRefsL1		= NULL;
+	m_aauiAnchorRefL0			= NULL;
+	m_aauiAnchorRefL1			= NULL;
+	m_auiNumNonAnchorRefsL0		= NULL;
+	m_auiNumNonAnchorRefsL1		= NULL;
+	m_aauiNonAnchorRefL0		= NULL;
+	m_aauiNonAnchorRefL1		= NULL;
+	//} ~MVC
 }
 
 Void TAppEncCfg::destroy()
@@ -101,7 +372,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string cfg_BitstreamFile;
   string cfg_ReconFile;
   string cfg_dQPFile;
-  po::Options opts;
+  //po::Options opts;
+  OptionsMVC opts(*this);
   opts.addOptions()
   ("help", do_help, false, "this help text")
   ("c", po::parseConfigFile, "configuration file name")
@@ -202,6 +474,23 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   /* Compatability with old style -1 FOO or -0 FOO options. */
   ("1", doOldStyleCmdlineOn, "turn option <name> on")
   ("0", doOldStyleCmdlineOff, "turn option <name> off")
+  ;
+
+  //{ MVC
+  opts.addOptionsMVC()
+  ("-curvid",				m_uiCurrentViewID,	100u,	"current view id")
+  ("NumViewsMinusOne",		procOptionsMVC,				"Number of view objects minus one")
+  ("ViewOrder",				procOptionsMVC,				"Order of encoding view objects")
+  ("View_ID",				procOptionsMVC,				"view id of a view 0 - 1024")
+  ("Fwd_NumAnchorRefs",		procOptionsMVC,				"Number of list_0 references for anchor")
+  ("Bwd_NumAnchorRefs",		procOptionsMVC,				"Number of list_1 references for anchor")
+  ("Fwd_NumNonAnchorRefs",	procOptionsMVC,				"Number of list_0 references for non-anchor")
+  ("Bwd_NumNonAnchorRefs",	procOptionsMVC,				"Number of list_1 references for non-anchor")
+  ("Fwd_AnchorRefs",		procOptionsMVC,				"Index for list_0 and reference view id for anchor")
+  ("Bwd_AnchorRefs",		procOptionsMVC,				"Index for list_1 and reference view id for anchor")
+  ("Fwd_NonAnchorRefs",		procOptionsMVC,				"Index for list_0 and reference view id for non-anchor")
+  ("Bwd_NonAnchorRefs",		procOptionsMVC,				"Index for list_1 and reference view id for non-anchor")
+  //} ~MVC
   ;
   
   po::setDefaults(opts);
@@ -496,6 +785,47 @@ Void TAppEncCfg::xPrintParameter()
 #if HHI_RMP_SWITCH
   printf("RMP:%d ", m_bUseRMP);
 #endif
+
+  printf("\n\n");
+
+  //{ MVC
+  printf( "MVC Enable                   : %s\n", m_bMVC ? "true" : "false" );
+  printf( "Current View ID              : %d\n", m_uiCurrentViewID );
+  printf( "NumViewsMinusOne             : %d\n", m_uiNumViewsMinusOne );
+  printf( "ViewOrder                    : ");
+  {
+	  for ( UInt i = 0; i <= m_uiNumViewsMinusOne; i++ )
+	  {
+		  if ( i != m_uiNumViewsMinusOne )	printf("%d-", m_auiViewOrder[i]);
+		  else								printf("%d\n", m_auiViewOrder[i]);
+	  }
+  }
+  for ( UInt i = 0; i<= m_uiNumViewsMinusOne; i++ )
+  {
+	  printf( "  ViewOrder - %d\n", m_auiViewOrder[i] );
+	  printf( "    NumAnchorRefsL0            : %d\n", m_auiNumAnchorRefsL0[i]);
+	  for ( UInt j = 0; j < m_auiNumAnchorRefsL0[i]; j++ )
+		  printf( "      AnchorRefL0[%d][%d]    - %d\n", i, j, m_aauiAnchorRefL0[i][j]);
+
+
+
+	  printf( "    NumAnchorRefsL1            : %d\n", m_auiNumAnchorRefsL1[i]);
+	  for ( UInt j = 0; j < m_auiNumAnchorRefsL1[i]; j++ )
+		  printf( "      AnchorRefL1[%d][%d]    - %d\n", i, j, m_aauiAnchorRefL1[i][j]);
+
+
+	  printf( "    NumNonAnchorRefsL0         : %d\n", m_auiNumNonAnchorRefsL0[i]);
+	  for ( UInt j = 0; j < m_auiNumNonAnchorRefsL0[i]; j++ )
+		  printf( "      NonAnchorRefL0[%d][%d] - %d\n", i, j, m_aauiNonAnchorRefL0[i][j]);
+
+
+	  printf( "    NumNonAnchorRefsL1         : %d\n", m_auiNumNonAnchorRefsL1[i]);
+	  for ( UInt j = 0; j < m_auiNumNonAnchorRefsL1[i]; j++ )
+		  printf( "      NonAnchorRefL1[%d][%d] - %d\n", i, j, m_aauiNonAnchorRefL1[i][j]);
+  }
+  //} ~MVC
+
+
   printf("\n");
   
   fflush(stdout);
