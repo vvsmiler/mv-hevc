@@ -1,4 +1,5 @@
 #summary AVC와 HEVC의 NAL unit header 비교 및 MVC 고려 사항
+#labels Phase-Design
 
 = 개요 =
 
@@ -18,7 +19,7 @@ AVC의 NAL unit syntax
 |  nal_unit_type                                                  | All | u(5)       |
 |  NumBytesInRBSP = 0                                             |     |            |
 |  nalUnitHeaderBytes = 1                                         |     |            |
-|  if( nal_unit_type == 14 || nal_unit_type == 20) {              |     |            |
+|  if( nal_unit_type == 14 || nal_unit_type == 20 ) {             |     |            |
 |    svc_extension_flag                                           | All | u(1)       |
 |    if( svc_extension_flag )                                     |     |            |
 |      nal_unit_header_svc_extension() // specified in Annex G    | All |            |
@@ -59,7 +60,7 @@ HEVC의 NAL unit syntax
 |  nal_unit_type                                                  | u(5)       |
 |  NumBytesInRBSP = 0                                             |            |
 |  nalUnitHeaderBytes = 1                                         |            |
-|  if( nal_unit_type == 1 || nal_unit_type == 5) {                |            |
+|  if( nal_unit_type == 1 || nal_unit_type == 5 ) {               |            |
 |    temporal_flag                                                | u(3)       |
 |    output_flag                                                  | u(1)       |
 |    reserved_zero_4bits                                          | u(4)       |
@@ -85,13 +86,15 @@ HEVC의 NAL unit syntax
 |  nal_unit_type                                                  | u(5)       |
 |  NumBytesInRBSP = 0                                             |            |
 |  nalUnitHeaderBytes = 1                                         |            |
-|  if( nal_unit_type == 1 | nal_unit_type == 5) {                 |            |
+|  if( nal_unit_type == 1 || nal_unit_type == 5 ) {               |            |
 |    temporal_flag                                                | u(3)       |
 |    output_flag                                                  | u(1)       |
 |    reserved_zero_4bits                                          | u(4)       |
 |    nalUnitHeaderBytes += 1                                      |            |
-|  } else if( nal_unit_type == 14 )                               |            |
-|      nal_unit_header_mvc_extension()                            |            |
+|  } else if( nal_unit_type == 14 || nal_unit_type == 20 ) {      |            |
+|    nal_unit_header_mvc_extension()                              |            |
+|    nalUnitHeaderBytes += 3                                      |            |
+|  }                                                              |            |
 |  for( i=nalUnitHeaderBytes; i<NumBytesInNALunit; i++ ) {        |            |
 |    if( i+2<NumBytesInNALunit && next_bits(24) == 0x000003) {    |            |
 |      rbsp_byte[NumBytesInRBSP++]                                | b(8)       |
