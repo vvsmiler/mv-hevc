@@ -147,5 +147,101 @@ AVC는 MVC를 수행 하기 위한 모든 정보를 SPS에 담아 두었다.
 }}}
 
 HEVC의 SPS는 다음과 같다.
+{{{
+|seq_parameter_set_rbsp() {                                              | Descriptor |
+|  profile_idc                                                           | u(8)       |
+|  reserved_zero_8bits /* equal to 0 */                                  | u(8)       |
+|  level_idc                                                             | u(8)       |
+|  seq_parameter_set_id                                                  | ue(v)      |
+|  pic_width_in_luma_samples                                             | u(16)      |
+|  pic_height_in_luma_samples                                            | u(16)      |
+|  bit_depth_luma_minus8                                                 | ue(v)      |
+|  bit_depth_chroma_minus8                                               | ue(v)      |
+|  bit_depth_luma_increment                                              | ue(v)      |
+|  bit_depth_chroma_increment                                            | ue(v)      |
+|  log2_max_frame_num_minus4                                             | ue(v)      |
+|  pic_order_cnt_type                                                    | ue(v)      |
+|  if( pic_order_cnt_type == 0 )                                         |            |
+|    log2_max_pic_order_cnt_lsb_minus4                                   | ue(v)      |
+|  else if( pic_order_cnt_type == 1 ) {                                  |            |
+|    delta_pic_order_always_zero_flag                                    | u(1)       |
+|    offset_for_non_ref_pic                                              | se(v)      |
+|    num_ref_frames_in_pic_order_cnt_cycle                               | ue(v)      |
+|    for( i=0; i<num_ref_frames_in_pic_order_cnt_cycle; i++ )            |            |
+|      offset_for_ref_frame[i]                                           | se(v)      |
+|  }                                                                     |            |
+|  max_num_ref_frames                                                    | ue(v)      |
+|  gaps_in_frame_num_value_allowed_flag                                  | u(1)       |
+|  log2_min_coding_block_size_minus3                                     | ue(v)      |
+|  log2_diff_max_min_coding_block_size                                   | ue(v)      |
+|  log2_min_transform_block_size_minus2                                  | ue(v)      |
+|  log2_diff_max_min_transform_block_size                                | ue(v)      |
+|  max_transform_hierarchy_depth_inter                                   | ue(v)      |
+|  max_transform_hierarchy_depth_intra                                   | ue(v)      |
+|  interpolation_filter_flag                                             | u(1)       |
+|  rbsp_trailing_bits()                                                  |            |
+|}                                                                       |            |
+}}}
 
+HEVC에 쓸 SPS MVC EXTENSION을 정의 해 보면 다음과 같다.
+{{{
+|seq_parameter_set_mvc_extension() {                                     | Descriptor |
+|  num_views_minus1                                                      | ue(v)      |
+|  for( i=0; i<=num_views_minus1; i++ )                                  |            |
+|    view_id[i]                                                          | ue(v)      |
+|  for( i=0; i<=num_views_minus1; i++ ) {                                |            |
+|    num_anchor_refs_l0[i]                                               | ue(v)      |
+|    for( j=0; j<num_anchor_refs_l0[i]; j++ )                            |            |
+|      anchor_ref_l0[i][j]                                               | ue(v)      |
+|    num_anchor_refs_l1[i]                                               | ue(v)      |
+|    for( j=0; j<num_anchor_refs_l1[i]; j++ )                            |            |
+|      anchor_ref_l[i][j]                                                | ue(v)      |
+|  }                                                                     |            |
+|  for( i=0; i<=num_views_minus1; i++ ) {                                |            |
+|    num_non_anchor_refs_l0[i]                                           | ue(v)      |
+|    for( j=0; j<num_non_anchor_refs_l0[i]; j++ )                        |            |
+|      non_anchor_ref_l0[i][j]                                           | ue(v)      |
+|    num_non_anchor_refs_l1[i]                                           | ue(v)      |
+|    for( j=0; j<num_non_anchor_refs_l1[i]; j++ )                        |            |
+|      non_anchor_ref_l[i][j]                                            | ue(v)      |
+|  }                                                                     |            |
+|}                                                                       |            |
+}}}
 
+합쳐 보면 다음과 같겠다.
+{{{
+|seq_parameter_set_rbsp() {                                              | Descriptor |
+|  profile_idc                                                           | u(8)       |
+|  reserved_zero_8bits /* equal to 0 */                                  | u(8)       |
+|  level_idc                                                             | u(8)       |
+|  seq_parameter_set_id                                                  | ue(v)      |
+|  pic_width_in_luma_samples                                             | u(16)      |
+|  pic_height_in_luma_samples                                            | u(16)      |
+|  bit_depth_luma_minus8                                                 | ue(v)      |
+|  bit_depth_chroma_minus8                                               | ue(v)      |
+|  bit_depth_luma_increment                                              | ue(v)      |
+|  bit_depth_chroma_increment                                            | ue(v)      |
+|  log2_max_frame_num_minus4                                             | ue(v)      |
+|  pic_order_cnt_type                                                    | ue(v)      |
+|  if( pic_order_cnt_type == 0 )                                         |            |
+|    log2_max_pic_order_cnt_lsb_minus4                                   | ue(v)      |
+|  else if( pic_order_cnt_type == 1 ) {                                  |            |
+|    delta_pic_order_always_zero_flag                                    | u(1)       |
+|    offset_for_non_ref_pic                                              | se(v)      |
+|    num_ref_frames_in_pic_order_cnt_cycle                               | ue(v)      |
+|    for( i=0; i<num_ref_frames_in_pic_order_cnt_cycle; i++ )            |            |
+|      offset_for_ref_frame[i]                                           | se(v)      |
+|  }                                                                     |            |
+|  max_num_ref_frames                                                    | ue(v)      |
+|  gaps_in_frame_num_value_allowed_flag                                  | u(1)       |
+|  log2_min_coding_block_size_minus3                                     | ue(v)      |
+|  log2_diff_max_min_coding_block_size                                   | ue(v)      |
+|  log2_min_transform_block_size_minus2                                  | ue(v)      |
+|  log2_diff_max_min_transform_block_size                                | ue(v)      |
+|  max_transform_hierarchy_depth_inter                                   | ue(v)      |
+|  max_transform_hierarchy_depth_intra                                   | ue(v)      |
+|  interpolation_filter_flag                                             | u(1)       |
+|  seq_parameter_set_mvc_extension()                                     |            |
+|  rbsp_trailing_bits()                                                  |            |
+|}                                                                       |            |
+}}}
