@@ -1,0 +1,10 @@
+#summary MVC를 위해 추가한 Sequence parameter set의 내용을 리뷰 하고 HEVC에 적용 할 방안을 찾아본다.
+#labels Phase-Design
+
+= 개요 =
+AVC는 MVC를 수행 하기 위한 모든 정보를 SPS에 담아 두었다.
+이 내용은 HEVC를 이용한 MVC에도 필수적으로 필요한 내용이다.
+
+= 세부 사항 =
+먼저, AVC의 seq_parameter_set_mvc_extension()을 살펴 본다.
+이 NAL의 ID는 
