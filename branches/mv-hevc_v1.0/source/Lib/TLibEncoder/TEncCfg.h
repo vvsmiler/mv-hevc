@@ -121,17 +121,19 @@ protected:
   Bool m_useRoundingControlBipred;
 #endif
 
-  // for multiview
-  UInt		m_uiNumViewsMinusOne;
-  UInt		*m_auiViewOrder;			// i : view object index, a[i] : view object id
-  UInt		*m_auiNumAnchorRefsL0;		// i : view object index, a[i] : number of anchor view objects
-  UInt		*m_auiNumAnchorRefsL1;		// i : view object index, a[i] : number of anchor view objects
-  UInt		**m_aauiAnchorRefL0;		// i : view object index, j : anchor view object index, a[i][j] : anchor view object id
-  UInt		**m_aauiAnchorRefL1;		// i : view object index, j : anchor view object index, a[i][j] : anchor view object id
-  UInt		*m_auiNumNonAnchorRefsL0;	// i : view object index, a[i] : number of non-anchor view objects
-  UInt		*m_auiNumNonAnchorRefsL1;	// i : view object index, a[i] : number of non-anchor view objects
-  UInt		**m_aauiNonAnchorRefL0;		// i : view object index, j : non-anchor view object index, a[i][j] : non-anchor view object id
-  UInt		**m_aauiNonAnchorRefL1;		// i : view object index, j : non-anchor view object index, a[i][j] : non-anchor view object id
+  //===== Multi View Coding ====
+  Bool		m_bMVC;                                           // flag for using MVC
+  UInt		m_uiCurrentViewID;                                // current encoding view id
+  UInt		m_uiNumViewsMinusOne;                             // number of view minus one
+  UInt		*m_auiViewOrder;                                  // i : view object index, a[i] : view object id
+  UInt		*m_auiNumAnchorRefsL0;                            // i : view object index, a[i] : number of anchor view objects at L0
+  UInt		*m_auiNumAnchorRefsL1;                            // i : view object index, a[i] : number of anchor view objects at L1
+  UInt		**m_aauiAnchorRefL0;                              // i : view object index, j : reference order, a[i][j] : anchor view object id at L0
+  UInt		**m_aauiAnchorRefL1;                              // i : view object index, j : reference order, a[i][j] : anchor view object id at L1
+  UInt		*m_auiNumNonAnchorRefsL0;                         // i : view object index, a[i] : number of non-anchor view objects at L0
+  UInt		*m_auiNumNonAnchorRefsL1;                         // i : view object index, a[i] : number of non-anchor view objects at L1
+  UInt		**m_aauiNonAnchorRefL0;                           // i : view object index, j : reference order, a[i][j] : non-anchor view object id at L0
+  UInt		**m_aauiNonAnchorRefL1;                           // i : view object index, j : reference order, a[i][j] : non-anchor view object id at L1
 
 public:
   TEncCfg()          {}
@@ -268,6 +270,33 @@ public:
   Void setUseRoundingControlBipred(Bool b) { m_useRoundingControlBipred = b; }
   Bool getUseRoundingControlBipred() { return m_useRoundingControlBipred; }
 #endif
+
+  //===== Multi View Coding ====
+  Void      setMVC                          ( Bool   b )     { m_bMVC = b; }
+  Void      setCurrentViewID                ( UInt   u )     { m_uiCurrentViewID = u; }
+  Void      setNumViewsMinusOne             ( UInt   u )     { m_uiNumViewsMinusOne = u; }
+  Void      setViewOrder                    ( UInt*  p )     { m_auiViewOrder = p; }
+  Void      setNumAnchorRefsL0              ( UInt*  p )     { m_auiNumAnchorRefsL0 = p; }
+  Void      setNumAnchorRefsL1              ( UInt*  p )     { m_auiNumAnchorRefsL1 = p; }
+  Void      setAnchorRefL0                  ( UInt** pp)     { m_aauiAnchorRefL0 = pp; }
+  Void      setAnchorRefL1                  ( UInt** pp)     { m_aauiAnchorRefL1 = pp; }
+  Void      setNumNonAnchorRefsL0           ( UInt*  p )     { m_auiNumNonAnchorRefsL0 = p; }
+  Void      setNumNonAnchorRefsL1           ( UInt*  p )     { m_auiNumNonAnchorRefsL1 = p; }
+  Void      setNonAnchorRefL0               ( UInt** pp)     { m_aauiNonAnchorRefL0 = pp; }
+  Void      setNonAnchorRefL1               ( UInt** pp)     { m_aauiNonAnchorRefL1 = pp; }
+
+  Bool      getMVC                          ()               { return m_bMVC; }
+  UInt      getCurrentViewID                ()               { return m_uiCurrentViewID; }
+  UInt      getNumViewsMinusOne             ()               { return m_uiNumViewsMinusOne; }
+  UInt*     getViewOrder                    ()               { return m_auiViewOrder; }
+  UInt*     getNumAnchorRefsL0              ()               { return m_auiNumAnchorRefsL0; }
+  UInt*     getNumAnchorRefsL1              ()               { return m_auiNumAnchorRefsL1; }
+  UInt**    getAnchorRefL0                  ()               { return m_aauiAnchorRefL0; }
+  UInt**    getAnchorRefL1                  ()               { return m_aauiAnchorRefL1; }
+  UInt*     getNumNonAnchorRefsL0           ()               { return m_auiNumNonAnchorRefsL0; }
+  UInt*     getNumNonAnchorRefsL1           ()               { return m_auiNumNonAnchorRefsL1; }
+  UInt**    getNonAnchorRefL0               ()               { return m_aauiNonAnchorRefL0; }
+  UInt**    getNonAnchorRefL1               ()               { return m_aauiNonAnchorRefL1; }
 };
 
 #endif // !defined(AFX_TENCCFG_H__6B99B797_F4DA_4E46_8E78_7656339A6C41__INCLUDED_)

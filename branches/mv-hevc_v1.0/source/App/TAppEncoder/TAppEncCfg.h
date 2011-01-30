@@ -38,6 +38,9 @@
 
 #include "../../Lib/TLibCommon/CommonDef.h"
 
+struct OptionFuncMVC;
+void procOptionsMVC(OptionFuncMVC& opt, const std::string& val);
+
 // ====================================================================================================================
 // Class definition
 // ====================================================================================================================
@@ -45,6 +48,7 @@
 /// encoder configuration class
 class TAppEncCfg
 {
+	friend void procOptionsMVC(OptionFuncMVC& opt, const std::string& val);
 protected:
   // file I/O
   char*     m_pchInputFile;                                   ///< source file name
@@ -135,21 +139,20 @@ protected:
   Bool m_useRoundingControlBipred;
 #endif
 
-public:
   // for multiview
-  Bool		m_bMVC;
-  UInt		m_uiCurrentViewID;
-  UInt		m_uiProcessingViewID;
-  UInt		m_uiNumViewsMinusOne;
-  UInt		*m_auiViewOrder;			// i : view object index, a[i] : view object id
-  UInt		*m_auiNumAnchorRefsL0;		// i : view object index, a[i] : number of anchor view objects
-  UInt		*m_auiNumAnchorRefsL1;		// i : view object index, a[i] : number of anchor view objects
-  UInt		**m_aauiAnchorRefL0;		// i : view object index, j : anchor view object index, a[i][j] : anchor view object id
-  UInt		**m_aauiAnchorRefL1;		// i : view object index, j : anchor view object index, a[i][j] : anchor view object id
-  UInt		*m_auiNumNonAnchorRefsL0;	// i : view object index, a[i] : number of non-anchor view objects
-  UInt		*m_auiNumNonAnchorRefsL1;	// i : view object index, a[i] : number of non-anchor view objects
-  UInt		**m_aauiNonAnchorRefL0;		// i : view object index, j : non-anchor view object index, a[i][j] : non-anchor view object id
-  UInt		**m_aauiNonAnchorRefL1;		// i : view object index, j : non-anchor view object index, a[i][j] : non-anchor view object id
+  Bool		m_bMVC;                                           ///< flag for using MVC
+  UInt		m_uiCurrentViewID;                                ///< current encoding view id
+  UInt		m_uiProcessingViewID;                             ///< current parsing view id
+  UInt		m_uiNumViewsMinusOne;                             ///< number of view minus one
+  UInt		*m_auiViewOrder;                                  ///< i : view object index, a[i] : view object id
+  UInt		*m_auiNumAnchorRefsL0;                            ///< i : view object index, a[i] : number of anchor view objects at L0
+  UInt		*m_auiNumAnchorRefsL1;                            ///< i : view object index, a[i] : number of anchor view objects at L1
+  UInt		**m_aauiAnchorRefL0;                              ///< i : view object index, j : reference order, a[i][j] : anchor view object id at L0
+  UInt		**m_aauiAnchorRefL1;                              ///< i : view object index, j : reference order, a[i][j] : anchor view object id at L1
+  UInt		*m_auiNumNonAnchorRefsL0;                         ///< i : view object index, a[i] : number of non-anchor view objects at L0
+  UInt		*m_auiNumNonAnchorRefsL1;                         ///< i : view object index, a[i] : number of non-anchor view objects at L1
+  UInt		**m_aauiNonAnchorRefL0;                           ///< i : view object index, j : reference order, a[i][j] : non-anchor view object id at L0
+  UInt		**m_aauiNonAnchorRefL1;                           ///< i : view object index, j : reference order, a[i][j] : non-anchor view object id at L1
   
   // internal member functions
   Void  xSetGlobal      ();                                   ///< set global variables
