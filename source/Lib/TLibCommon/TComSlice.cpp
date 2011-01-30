@@ -280,6 +280,7 @@ Void TComSlice::setRefPOCList       ()
   }
 }
 
+// [KSI] 여기에서 Multiview Referecne Picture를 pick up 한 다음 RefL0/RefL1에 설정한다.
 Void TComSlice::setRefPicList       ( TComList<TComPic*>& rcListPic )
 {
   if (m_eSliceType == I_SLICE)
@@ -438,6 +439,21 @@ TComSPS::TComSPS()
   
   // AMVP parameter
   ::memset( m_aeAMVPMode, 0, sizeof( m_aeAMVPMode ) );
+
+  // [KSI] Multiview
+  //{
+  m_bMVC                    = false;                          // flag for using MVC
+  m_uiNumViewsMinusOne      = 0;                              // number of view minus one
+  m_auiViewOrder            = NULL;                           // i : view object index, a[i] : view object id
+  m_auiNumAnchorRefsL0      = NULL;                           // i : view object index, a[i] : number of anchor view objects at L0
+  m_auiNumAnchorRefsL1      = NULL;                           // i : view object index, a[i] : number of anchor view objects at L1
+  m_aauiAnchorRefL0         = NULL;                           // i : view object index, j : reference order, a[i][j] : anchor view object id at L0
+  m_aauiAnchorRefL1         = NULL;                           // i : view object index, j : reference order, a[i][j] : anchor view object id at L1
+  m_auiNumNonAnchorRefsL0   = NULL;                           // i : view object index, a[i] : number of non-anchor view objects at L0
+  m_auiNumNonAnchorRefsL1   = NULL;                           // i : view object index, a[i] : number of non-anchor view objects at L1
+  m_aauiNonAnchorRefL0      = NULL;                           // i : view object index, j : reference order, a[i][j] : non-anchor view object id at L0
+  m_aauiNonAnchorRefL1      = NULL;                           // i : view object index, j : reference order, a[i][j] : non-anchor view object id at L1
+  //}
 }
 
 TComSPS::~TComSPS()

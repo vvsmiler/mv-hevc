@@ -109,6 +109,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
   TComBitstream*  pcOut = new TComBitstream;
   pcOut->create( 500000 );
   
+  // [KSI] 이 함수는 hierarchical B의 depth(m_iHrchDepth)만 결정한다.
+  // [KSI] 특이한점은 m_iHrchDepth에 실제 depth+1을 설정한다.
   xInitGOP( iPOCLast, iNumPicRcvd, rcListPic, rcListPicYuvRecOut );
   
   m_iNumPicCoded = 0;
@@ -140,6 +142,8 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       /////////////////////////////////////////////////////////////////////////////////////////////////// Initial to start encoding
       UInt  uiPOCCurr = iPOCLast - (iNumPicRcvd - iTimeOffset);
       
+	  // [KSI] TEncTop에 정의된 PictureList(참조 영상과 현재 입력 영상으로 구성된 리스트)
+	  // [KSI] TAppEncTop에 정의된 ReconPictureList, BitstreamList에서 currentPOC를 위해 할당된 item들을 찾아 하나씩 할당한다.
       xGetBuffer( rcListPic, rcListPicYuvRecOut, rcListBitstreamOut, iNumPicRcvd, iTimeOffset,  pcPic, pcPicYuvRecOut, pcBitstreamOut, uiPOCCurr );
       
       // save original picture
@@ -165,6 +169,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->setPPS( m_pcEncTop->getPPS() );
       
       //  Set reference list
+	  // [KSI] 여기에서 Multiview 관련 처리를 실행한다.
       pcSlice->setRefPicList ( rcListPic );
       
       //  Slice info. refinement

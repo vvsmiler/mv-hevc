@@ -477,6 +477,43 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   // Bit-depth information
   xWriteUvlc( pcSPS->getBitDepth() - 8 );
   xWriteUvlc( pcSPS->getBitIncrement() );
+
+  // [KSI] Multiview
+  //{
+  xWriteUvlc( pcSPS->getNumViewsMinusOne() );
+  for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
+  {
+	  xWriteUvlc( pcSPS->getViewOrder()[i] );
+  }
+
+  for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
+  {
+	  xWriteUvlc( pcSPS->getNumAnchorRefsL0()[i] );
+	  for ( UInt j = 0; j < pcSPS->getNumAnchorRefsL0()[i]; j++ )
+	  {
+		  xWriteUvlc( pcSPS->getAnchorRefL0()[i][j] );
+	  }
+	  xWriteUvlc( pcSPS->getNumAnchorRefsL1()[i] );
+	  for ( UInt j = 0; j < pcSPS->getNumAnchorRefsL1()[i]; j++ )
+	  {
+		  xWriteUvlc( pcSPS->getAnchorRefL1()[i][j] );
+	  }
+  }
+
+  for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
+  {
+	  xWriteUvlc( pcSPS->getNumNonAnchorRefsL0()[i] );
+	  for ( UInt j = 0; j < pcSPS->getNumNonAnchorRefsL0()[i]; j++ )
+	  {
+		  xWriteUvlc( pcSPS->getNonAnchorRefL0()[i][j] );
+	  }
+	  xWriteUvlc( pcSPS->getNumNonAnchorRefsL1()[i] );
+	  for ( UInt j = 0; j < pcSPS->getNumNonAnchorRefsL1()[i]; j++ )
+	  {
+		  xWriteUvlc( pcSPS->getNonAnchorRefL1()[i][j] );
+	  }
+  }
+  //}
 }
 
 Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )

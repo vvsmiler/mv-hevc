@@ -86,6 +86,19 @@ private:
   UInt        m_uiMaxTrSize;
   
   Int m_iAMPAcc[MAX_CU_DEPTH];
+
+  //===== Multi View Coding ====
+  Bool		m_bMVC;                                           // flag for using MVC
+  UInt		m_uiNumViewsMinusOne;                             // number of view minus one
+  UInt		*m_auiViewOrder;                                  // i : view object index, a[i] : view object id
+  UInt		*m_auiNumAnchorRefsL0;                            // i : view object index, a[i] : number of anchor view objects at L0
+  UInt		*m_auiNumAnchorRefsL1;                            // i : view object index, a[i] : number of anchor view objects at L1
+  UInt		**m_aauiAnchorRefL0;                              // i : view object index, j : reference order, a[i][j] : anchor view object id at L0
+  UInt		**m_aauiAnchorRefL1;                              // i : view object index, j : reference order, a[i][j] : anchor view object id at L1
+  UInt		*m_auiNumNonAnchorRefsL0;                         // i : view object index, a[i] : number of non-anchor view objects at L0
+  UInt		*m_auiNumNonAnchorRefsL1;                         // i : view object index, a[i] : number of non-anchor view objects at L1
+  UInt		**m_aauiNonAnchorRefL0;                           // i : view object index, j : reference order, a[i][j] : non-anchor view object id at L0
+  UInt		**m_aauiNonAnchorRefL1;                           // i : view object index, j : reference order, a[i][j] : non-anchor view object id at L1
   
 public:
   TComSPS();
@@ -159,6 +172,100 @@ public:
   Void      setBitDepth     ( UInt u ) { m_uiBitDepth = u;        }
   UInt      getBitIncrement ()         { return m_uiBitIncrement; }
   Void      setBitIncrement ( UInt u ) { m_uiBitIncrement = u;    }
+
+  //===== Multi View Coding ====
+  Void      setMVC                          ( Bool   b )     { m_bMVC = b; }
+  Void      setNumViewsMinusOne             ( UInt   u )     { m_uiNumViewsMinusOne = u; }
+  Void      setViewOrder                    ( UInt*  p )     { m_auiViewOrder = p; }
+  Void      setNumAnchorRefsL0              ( UInt*  p )     { m_auiNumAnchorRefsL0 = p; }
+  Void      setNumAnchorRefsL1              ( UInt*  p )     { m_auiNumAnchorRefsL1 = p; }
+  Void      setAnchorRefL0                  ( UInt** pp)     { m_aauiAnchorRefL0 = pp; }
+  Void      setAnchorRefL1                  ( UInt** pp)     { m_aauiAnchorRefL1 = pp; }
+  Void      setNumNonAnchorRefsL0           ( UInt*  p )     { m_auiNumNonAnchorRefsL0 = p; }
+  Void      setNumNonAnchorRefsL1           ( UInt*  p )     { m_auiNumNonAnchorRefsL1 = p; }
+  Void      setNonAnchorRefL0               ( UInt** pp)     { m_aauiNonAnchorRefL0 = pp; }
+  Void      setNonAnchorRefL1               ( UInt** pp)     { m_aauiNonAnchorRefL1 = pp; }
+
+  Bool      getMVC                          ()               { return m_bMVC; }
+  UInt      getNumViewsMinusOne             ()               { return m_uiNumViewsMinusOne; }
+  UInt*     getViewOrder                    ()               { return m_auiViewOrder; }
+  UInt*     getNumAnchorRefsL0              ()               { return m_auiNumAnchorRefsL0; }
+  UInt*     getNumAnchorRefsL1              ()               { return m_auiNumAnchorRefsL1; }
+  UInt**    getAnchorRefL0                  ()               { return m_aauiAnchorRefL0; }
+  UInt**    getAnchorRefL1                  ()               { return m_aauiAnchorRefL1; }
+  UInt*     getNumNonAnchorRefsL0           ()               { return m_auiNumNonAnchorRefsL0; }
+  UInt*     getNumNonAnchorRefsL1           ()               { return m_auiNumNonAnchorRefsL1; }
+  UInt**    getNonAnchorRefL0               ()               { return m_aauiNonAnchorRefL0; }
+  UInt**    getNonAnchorRefL1               ()               { return m_aauiNonAnchorRefL1; }
+
+  Void      setViewOrder          ( UInt pos, UInt val )
+  {
+	  assert(pos <= m_uiNumViewsMinusOne);
+	  if ( m_auiViewOrder == NULL ) m_auiViewOrder = new UInt[getNumViewsMinusOne()];
+	  m_auiViewOrder[pos] = val;
+  }
+  Void      setNumAnchorRefsL0    ( UInt pos, UInt val )
+  {
+	  assert(pos <= m_uiNumViewsMinusOne);
+	  if ( m_auiNumAnchorRefsL0 == NULL )    m_auiNumAnchorRefsL0 = new UInt[getNumViewsMinusOne()];
+	  m_auiNumAnchorRefsL0[pos] = val;
+
+	  if ( m_aauiAnchorRefL0 == NULL )       m_aauiAnchorRefL0 = new UInt*[getNumViewsMinusOne()];
+	  if ( m_aauiAnchorRefL0[pos] == NULL )  m_aauiAnchorRefL0[pos] = new UInt[val];
+  }
+  Void      setNumAnchorRefsL1    ( UInt pos, UInt val )
+  {
+	  assert(pos <= m_uiNumViewsMinusOne);
+	  if ( m_auiNumAnchorRefsL1 == NULL )    m_auiNumAnchorRefsL1 = new UInt[getNumViewsMinusOne()];
+	  m_auiNumAnchorRefsL1[pos] = val;
+
+	  if ( m_aauiAnchorRefL1 == NULL )       m_aauiAnchorRefL1 = new UInt*[getNumViewsMinusOne()];
+	  if ( m_aauiAnchorRefL1[pos] == NULL )  m_aauiAnchorRefL1[pos] = new UInt[val];
+  }
+  Void      setAnchorRefL0        ( UInt row, UInt col, UInt val )
+  {
+	  assert(row <= m_uiNumViewsMinusOne);
+	  assert(col < m_auiNumAnchorRefsL0[row]);
+	  m_aauiAnchorRefL0[row][col] = val;
+  }
+  Void      setAnchorRefL1        ( UInt row, UInt col, UInt val )
+  {
+	  assert(row <= m_uiNumViewsMinusOne);
+	  assert(col < m_auiNumAnchorRefsL1[row]);
+	  m_aauiAnchorRefL1[row][col] = val;
+  }
+  Void      setNumNonAnchorRefsL0    ( UInt pos, UInt val )
+  {
+	  assert(pos <= m_uiNumViewsMinusOne);
+	  if ( m_auiNumNonAnchorRefsL0 == NULL )    m_auiNumNonAnchorRefsL0 = new UInt[getNumViewsMinusOne()];
+	  m_auiNumNonAnchorRefsL0[pos] = val;
+
+	  if ( m_aauiNonAnchorRefL0 == NULL )       m_aauiNonAnchorRefL0 = new UInt*[getNumViewsMinusOne()];
+	  if ( m_aauiNonAnchorRefL0[pos] == NULL )  m_aauiNonAnchorRefL0[pos] = new UInt[val];
+  }
+  Void      setNumNonAnchorRefsL1    ( UInt pos, UInt val )
+  {
+	  assert(pos <= m_uiNumViewsMinusOne);
+	  if ( m_auiNumNonAnchorRefsL1 == NULL )    m_auiNumNonAnchorRefsL1 = new UInt[getNumViewsMinusOne()];
+	  m_auiNumNonAnchorRefsL1[pos] = val;
+
+	  if ( m_aauiNonAnchorRefL1 == NULL )       m_aauiNonAnchorRefL1 = new UInt*[getNumViewsMinusOne()];
+	  if ( m_aauiNonAnchorRefL1[pos] == NULL )  m_aauiNonAnchorRefL1[pos] = new UInt[val];
+  }
+  Void      setNonAnchorRefL0        ( UInt row, UInt col, UInt val )
+  {
+	  assert(row <= m_uiNumViewsMinusOne);
+	  assert(col < m_auiNumNonAnchorRefsL0[row]);
+	  m_aauiNonAnchorRefL0[row][col] = val;
+  }
+  Void      setNonAnchorRefL1        ( UInt row, UInt col, UInt val )
+  {
+	  assert(row <= m_uiNumViewsMinusOne);
+	  assert(col < m_auiNumNonAnchorRefsL1[row]);
+	  m_aauiNonAnchorRefL1[row][col] = val;
+  }
+
+
 };
 
 /// PPS class

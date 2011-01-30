@@ -132,6 +132,43 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
 #else
   g_uiIBDI_MAX  = ((1<<(g_uiBitDepth+g_uiBitIncrement))-1);
 #endif
+
+  // [KSI] Multiview
+  //{
+  xReadUvlc( uiCode ); pcSPS->setNumViewsMinusOne( uiCode );
+  for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
+  {
+	  xReadUvlc( uiCode ); pcSPS->setViewOrder( i, uiCode );
+  }
+
+  for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
+  {
+	  xReadUvlc( uiCode ); pcSPS->setNumAnchorRefsL0(i, uiCode );
+	  for ( UInt j = 0; j < pcSPS->getNumAnchorRefsL0()[i]; j++ )
+	  {
+		  xReadUvlc( uiCode ); pcSPS->setAnchorRefL0(i, j, uiCode);
+	  }
+	  xReadUvlc( uiCode ); pcSPS->setNumAnchorRefsL1( i, uiCode );
+	  for ( UInt j = 0; j < pcSPS->getNumAnchorRefsL1()[i]; j++ )
+	  {
+		  xReadUvlc( uiCode ); pcSPS->setAnchorRefL1( i, j, uiCode );
+	  }
+  }
+
+  for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
+  {
+	  xReadUvlc( uiCode ); pcSPS->setNumNonAnchorRefsL0( i, uiCode );
+	  for ( UInt j = 0; j < pcSPS->getNumNonAnchorRefsL0()[i]; j++ )
+	  {
+		  xReadUvlc( uiCode ); pcSPS->setNonAnchorRefL0( i, j, uiCode );
+	  }
+	  xReadUvlc( uiCode ); pcSPS->setNumNonAnchorRefsL1( i, uiCode );
+	  for ( UInt j = 0; j < pcSPS->getNumNonAnchorRefsL1()[i]; j++ )
+	  {
+		  xReadUvlc( uiCode ); pcSPS->setNonAnchorRefL1( i, j, uiCode );
+	  }
+  }
+  //}
   
   return;
 }

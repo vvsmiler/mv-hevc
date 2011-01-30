@@ -47,6 +47,7 @@
 using namespace std;
 namespace po = df::program_options_lite;
 
+// [KSI] 기존의 설정과 형태가 다른 MVC용 설정을 위해 추가한 유틸리티.
 //{ MVC
 class OptionMVC;
 struct OptionsMVC: public po::Options
@@ -103,7 +104,7 @@ OptionMVC OptionsMVC::addOptionsMVC()
 	return OptionMVC(*this);
 }
 
-void procOptionsMVC(OptionFuncMVC& opt, const string& val)
+void procOptionsMVC(OptionFuncMVC& opt, const std::string& val)
 {
 	TAppEncCfg& p = opt.parent.AppEncCfg;
 	if ( opt.opt_string == "NumViewsMinusOne" )
@@ -337,9 +338,9 @@ Void TAppEncCfg::create()
 {
 	//{ MVC
 	m_bMVC						= false;
-	m_uiCurrentViewID			= 100;
-	m_uiProcessingViewID		= 100;
-	m_uiNumViewsMinusOne		= 100;
+	m_uiCurrentViewID			= -1;
+	m_uiProcessingViewID		= -1;
+	m_uiNumViewsMinusOne		= -1;
 	m_auiViewOrder				= NULL;
 	m_auiNumAnchorRefsL0		= NULL;
 	m_auiNumAnchorRefsL1		= NULL;
@@ -471,25 +472,26 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   /* Misc. */
   ("FEN", m_bUseFastEnc, false, "fast encoder setting")
   
-  /* Compatability with old style -1 FOO or -0 FOO options. */
+  /* Compatibility with old style -1 FOO or -0 FOO options. */
   ("1", doOldStyleCmdlineOn, "turn option <name> on")
   ("0", doOldStyleCmdlineOff, "turn option <name> off")
   ;
 
+  // [KSI] MVC를 위한 옵션들 처리.
   //{ MVC
   opts.addOptionsMVC()
-  ("-curvid",				m_uiCurrentViewID,	100u,	"current view id")
-  ("NumViewsMinusOne",		procOptionsMVC,				"Number of view objects minus one")
-  ("ViewOrder",				procOptionsMVC,				"Order of encoding view objects")
-  ("View_ID",				procOptionsMVC,				"view id of a view 0 - 1024")
-  ("Fwd_NumAnchorRefs",		procOptionsMVC,				"Number of list_0 references for anchor")
-  ("Bwd_NumAnchorRefs",		procOptionsMVC,				"Number of list_1 references for anchor")
-  ("Fwd_NumNonAnchorRefs",	procOptionsMVC,				"Number of list_0 references for non-anchor")
-  ("Bwd_NumNonAnchorRefs",	procOptionsMVC,				"Number of list_1 references for non-anchor")
-  ("Fwd_AnchorRefs",		procOptionsMVC,				"Index for list_0 and reference view id for anchor")
-  ("Bwd_AnchorRefs",		procOptionsMVC,				"Index for list_1 and reference view id for anchor")
-  ("Fwd_NonAnchorRefs",		procOptionsMVC,				"Index for list_0 and reference view id for non-anchor")
-  ("Bwd_NonAnchorRefs",		procOptionsMVC,				"Index for list_1 and reference view id for non-anchor")
+  ("-curvid",				m_uiCurrentViewID, 0xFFFFFFFFu,	"current view id")
+  ("NumViewsMinusOne",		procOptionsMVC,					"Number of view objects minus one")
+  ("ViewOrder",				procOptionsMVC,					"Order of encoding view objects")
+  ("View_ID",				procOptionsMVC,					"view id of a view 0 - 1024")
+  ("Fwd_NumAnchorRefs",		procOptionsMVC,					"Number of list_0 references for anchor")
+  ("Bwd_NumAnchorRefs",		procOptionsMVC,					"Number of list_1 references for anchor")
+  ("Fwd_NumNonAnchorRefs",	procOptionsMVC,					"Number of list_0 references for non-anchor")
+  ("Bwd_NumNonAnchorRefs",	procOptionsMVC,					"Number of list_1 references for non-anchor")
+  ("Fwd_AnchorRefs",		procOptionsMVC,					"Index for list_0 and reference view id for anchor")
+  ("Bwd_AnchorRefs",		procOptionsMVC,					"Index for list_1 and reference view id for anchor")
+  ("Fwd_NonAnchorRefs",		procOptionsMVC,					"Index for list_0 and reference view id for non-anchor")
+  ("Bwd_NonAnchorRefs",		procOptionsMVC,					"Index for list_1 and reference view id for non-anchor")
   //} ~MVC
   ;
   
@@ -507,6 +509,21 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   /*
    * Set any derived parameters
    */
+
+  if ( m_bMVC )
+  {
+	  char pos[10];
+	  cfg_InputFile += '_';
+	  cfg_InputFile += _itoa(m_uiCurrentViewID, pos, 10);
+	  cfg_InputFile += ".yuv";
+	  cfg_BitstreamFile += '_';
+	  cfg_BitstreamFile += _itoa(m_uiCurrentViewID, pos, 10);
+	  cfg_BitstreamFile += ".bin";  
+	  cfg_ReconFile += '_';
+	  cfg_ReconFile += _itoa(m_uiCurrentViewID, pos, 10);
+	  cfg_ReconFile += ".yuv";
+  }
+
   /* convert std::string to c string for compatability */
   m_pchInputFile = cfg_InputFile.empty() ? NULL : strdup(cfg_InputFile.c_str());
   m_pchBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());
@@ -806,19 +823,12 @@ Void TAppEncCfg::xPrintParameter()
 	  printf( "    NumAnchorRefsL0            : %d\n", m_auiNumAnchorRefsL0[i]);
 	  for ( UInt j = 0; j < m_auiNumAnchorRefsL0[i]; j++ )
 		  printf( "      AnchorRefL0[%d][%d]    - %d\n", i, j, m_aauiAnchorRefL0[i][j]);
-
-
-
 	  printf( "    NumAnchorRefsL1            : %d\n", m_auiNumAnchorRefsL1[i]);
 	  for ( UInt j = 0; j < m_auiNumAnchorRefsL1[i]; j++ )
 		  printf( "      AnchorRefL1[%d][%d]    - %d\n", i, j, m_aauiAnchorRefL1[i][j]);
-
-
 	  printf( "    NumNonAnchorRefsL0         : %d\n", m_auiNumNonAnchorRefsL0[i]);
 	  for ( UInt j = 0; j < m_auiNumNonAnchorRefsL0[i]; j++ )
 		  printf( "      NonAnchorRefL0[%d][%d] - %d\n", i, j, m_aauiNonAnchorRefL0[i][j]);
-
-
 	  printf( "    NumNonAnchorRefsL1         : %d\n", m_auiNumNonAnchorRefsL1[i]);
 	  for ( UInt j = 0; j < m_auiNumNonAnchorRefsL1[i]; j++ )
 		  printf( "      NonAnchorRefL1[%d][%d] - %d\n", i, j, m_aauiNonAnchorRefL1[i][j]);
