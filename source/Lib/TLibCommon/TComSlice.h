@@ -210,7 +210,11 @@ public:
 	  if ( m_auiNumAnchorRefsL0 == NULL )    m_auiNumAnchorRefsL0 = new UInt[getNumViewsMinusOne()];
 	  m_auiNumAnchorRefsL0[pos] = val;
 
-	  if ( m_aauiAnchorRefL0 == NULL )       m_aauiAnchorRefL0 = new UInt*[getNumViewsMinusOne()];
+	  if ( m_aauiAnchorRefL0 == NULL )
+	  {
+		  m_aauiAnchorRefL0 = new UInt*[getNumViewsMinusOne()];
+		  memset(m_aauiAnchorRefL0, NULL, sizeof(UInt*)*getNumViewsMinusOne());
+	  }
 	  if ( m_aauiAnchorRefL0[pos] == NULL )  m_aauiAnchorRefL0[pos] = new UInt[val];
   }
   Void      setNumAnchorRefsL1    ( UInt pos, UInt val )
@@ -219,7 +223,11 @@ public:
 	  if ( m_auiNumAnchorRefsL1 == NULL )    m_auiNumAnchorRefsL1 = new UInt[getNumViewsMinusOne()];
 	  m_auiNumAnchorRefsL1[pos] = val;
 
-	  if ( m_aauiAnchorRefL1 == NULL )       m_aauiAnchorRefL1 = new UInt*[getNumViewsMinusOne()];
+	  if ( m_aauiAnchorRefL1 == NULL )
+	  {
+		  m_aauiAnchorRefL1 = new UInt*[getNumViewsMinusOne()];
+		  memset(m_aauiAnchorRefL1, NULL, sizeof(UInt*)*getNumViewsMinusOne());
+	  }
 	  if ( m_aauiAnchorRefL1[pos] == NULL )  m_aauiAnchorRefL1[pos] = new UInt[val];
   }
   Void      setAnchorRefL0        ( UInt row, UInt col, UInt val )
@@ -240,7 +248,11 @@ public:
 	  if ( m_auiNumNonAnchorRefsL0 == NULL )    m_auiNumNonAnchorRefsL0 = new UInt[getNumViewsMinusOne()];
 	  m_auiNumNonAnchorRefsL0[pos] = val;
 
-	  if ( m_aauiNonAnchorRefL0 == NULL )       m_aauiNonAnchorRefL0 = new UInt*[getNumViewsMinusOne()];
+	  if ( m_aauiNonAnchorRefL0 == NULL )
+	  {
+		  m_aauiNonAnchorRefL0 = new UInt*[getNumViewsMinusOne()];
+		  memset(m_aauiNonAnchorRefL0, NULL, sizeof(UInt*)*getNumViewsMinusOne());
+	  }
 	  if ( m_aauiNonAnchorRefL0[pos] == NULL )  m_aauiNonAnchorRefL0[pos] = new UInt[val];
   }
   Void      setNumNonAnchorRefsL1    ( UInt pos, UInt val )
@@ -249,7 +261,11 @@ public:
 	  if ( m_auiNumNonAnchorRefsL1 == NULL )    m_auiNumNonAnchorRefsL1 = new UInt[getNumViewsMinusOne()];
 	  m_auiNumNonAnchorRefsL1[pos] = val;
 
-	  if ( m_aauiNonAnchorRefL1 == NULL )       m_aauiNonAnchorRefL1 = new UInt*[getNumViewsMinusOne()];
+	  if ( m_aauiNonAnchorRefL1 == NULL )
+	  {
+		  m_aauiNonAnchorRefL1 = new UInt*[getNumViewsMinusOne()];
+		  memset(m_aauiNonAnchorRefL1, NULL, sizeof(UInt*)*getNumViewsMinusOne());
+	  }
 	  if ( m_aauiNonAnchorRefL1[pos] == NULL )  m_aauiNonAnchorRefL1[pos] = new UInt[val];
   }
   Void      setNonAnchorRefL0        ( UInt row, UInt col, UInt val )
