@@ -125,6 +125,10 @@ Void  TComSlice::sortPicList        (TComList<TComPic*>& rcListPic)
   }
 }
 
+// [KSI] TEncTop::m_cListPic에서 POCCurr의 TComPic을 기준으로 LIST0, LIST1에 등록 할
+// [KSI] 참조용 TComPic을 찾는다. 이 때, ERB/DRB를 고를 수 있고 NORMAL/LTR을 설정하여 검색 조건을 지정할 수 있다.
+// [KSI] 입력: rcListPic, bDRBFlag, uiPOCCurr, eRefPicList, uiNthRefPic
+// [KSI] 출력: 검색 조건에 맞는 TComPic*, 없으면 NULL
 TComPic* TComSlice::xGetRefPic (TComList<TComPic*>& rcListPic,
                                 Bool                bDRBFlag,
                                 ERBIndex            eERBIndex,
@@ -149,21 +153,29 @@ TComPic* TComSlice::xGetRefPic (TComList<TComPic*>& rcListPic,
   
   if( eRefPicList == REF_PIC_LIST_0 )
   {
+	// [KSI] 현재 POC의 TComPic부터 뒤로 이동하면서 과거의 프레임을 뒤진다.
     while(1)
     {
+	  // [KSI] 맨 처음까지 가면 탈출 조건.
       if (iterPic == rcListPic.begin())
         break;
       
+	  // [KSI] 뒤로 이동한다.
       iterPic--;
       pcPic = *(iterPic);
+
+	  // [KSI] 과거에 ENC/RECON이 되었고 bDRBFlag와 같은 값이고 eERBIndex가 같은지 검사.
+	  // [KSI] 세 가지 조건을 모두 만족하면 해당 프레임은 사용할 수 있다.
       if( ( !pcPic->getReconMark()                        ) ||
          ( bDRBFlag  != pcPic->getSlice()->getDRBFlag()  ) ||
          ( eERBIndex != pcPic->getSlice()->getERBIndex() ) )
         continue;
       
+	  // [KSI] 위의 조건을 통과해도, REF용으로 지정되지 않았으면 다른 프레임을 조사한다.
       if( !pcPic->getSlice()->isReferenced() )
         continue;
       
+	  // [KSI] 찾은 프레임의 갯수를 카운트 하고, 이 값이 원하는 위치와 같다면 리턴한다.
       uiCount++;
       if (uiCount == uiNthRefPic)
       {
@@ -172,9 +184,11 @@ TComPic* TComSlice::xGetRefPic (TComList<TComPic*>& rcListPic,
       }
     }
     
+	// [KSI] 위의 while loop에서 맨 처음까지 뒤졌으나 소득이 없는 경우 여기를 실행한다.
+	// [KSI] 이 때는 Low Delay Coding이 설정 되어 있지 않아야 한다.
     if ( !m_pcSPS->getUseLDC() )
     {
-      
+      // [KSI] 다시 현재 위치를 찾는다.
       iterPic = rcListPic.begin();
       pcPic = *(iterPic);
       while ( (pcPic->getPOC() != (Int)uiPOCCurr) && (iterPic != rcListPic.end()) )
@@ -184,6 +198,8 @@ TComPic* TComSlice::xGetRefPic (TComList<TComPic*>& rcListPic,
       }
       assert (pcPic->getPOC() == (Int)uiPOCCurr);
       
+	  // [KSI] 현재의 POC의 TComPic부터 앞으로 이동하면서 미래의 프레임을 뒤진다.
+	  // [KSI] 앞서와 같은 조건의 프레임을 찾는다.
       while(1)
       {
         iterPic++;
@@ -207,9 +223,11 @@ TComPic* TComSlice::xGetRefPic (TComList<TComPic*>& rcListPic,
         }
       }
     }
+	// [KSI] 그래도 없으면 NULL을 리턴한다.
   }
   else
   {
+	// [KSI] 여기에서는 위와 정확히 반대 방향으로 리스트를 뒤진다.
     while(1)
     {
       iterPic++;
@@ -291,6 +309,7 @@ Void TComSlice::setRefPicList       ( TComList<TComPic*>& rcListPic )
     return;
   }
   
+  // 먼저, Reference Picture List의 Item 수량을 설정 한다.
   m_aiNumRefIdx[0] = Min ( m_aiNumRefIdx[0], (Int)(rcListPic.size())-1 );
   m_aiNumRefIdx[1] = Min ( m_aiNumRefIdx[1], (Int)(rcListPic.size())-1 );
   

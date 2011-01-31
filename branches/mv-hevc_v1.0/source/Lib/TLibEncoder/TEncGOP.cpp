@@ -106,20 +106,25 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
   TComBitstream*  pcBitstreamOut;
   TComPicYuv      cPicOrg;
   //stats
+  // [KSI] 이 변수는 쓸데 없이 존재 한다. 지우고 싶으나, 일단 놔둔다.
   TComBitstream*  pcOut = new TComBitstream;
   pcOut->create( 500000 );
   
   // [KSI] 이 함수는 hierarchical B의 depth(m_iHrchDepth)만 결정한다.
   // [KSI] 특이한점은 m_iHrchDepth에 실제 depth+1을 설정한다.
+  // [KSI] 아래의 parameter중 iPOCLast만 사용한다. 나머지는 쓸데 없이 존재 한다. 지우고 싶으나, 일단 놔둔다.
   xInitGOP( iPOCLast, iNumPicRcvd, rcListPic, rcListPicYuvRecOut );
   
   m_iNumPicCoded = 0;
   for ( Int iDepth = 0; iDepth < m_iHrchDepth; iDepth++ )
   {
-    Int iTimeOffset = ( 1 << (m_iHrchDepth - 1 - iDepth) );
-    Int iStep       = iTimeOffset << 1;
+    Int iTimeOffset = ( 1 << (m_iHrchDepth - 1 - iDepth) ); // 예1) GOP가 8인, Depth가 0인 경우 iTimeOffset = ( 1 << (4 - 1 - 0) ) = 8
+	                                                        // 예2) GOP가 8인, Depth가 1인 경우 iTimeOffset = ( 1 << (4 - 1 - 1) ) = 4
+    Int iStep       = iTimeOffset << 1;                     // 예1) 위의 경우, 16
+	                                                        // 예2) 위의 경우, 8
     
     // generalized B info.
+	// [KSI] MVC는 해당 없음.
     if ( (m_pcCfg->getHierarchicalCoding() == false) && (iDepth != 0) )
     {
       iTimeOffset   = 1;
@@ -134,19 +139,29 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       long iBeforeTime = clock();
       
       // generalized B info.
+	  // [KSI] MVC는 해당 없음.
       if ( (m_pcCfg->getHierarchicalCoding() == false) && (iDepth != 0) && (iTimeOffset == m_iGopSize) && (iPOCLast != 0) )
       {
         continue;
       }
       
       /////////////////////////////////////////////////////////////////////////////////////////////////// Initial to start encoding
-      UInt  uiPOCCurr = iPOCLast - (iNumPicRcvd - iTimeOffset);
+      UInt  uiPOCCurr = iPOCLast - (iNumPicRcvd - iTimeOffset); // 예1) iPOCLast는 8, iNumPicRcvd는 8, iTimeOffset은 8 POCCurr = 8 - (8 - 8) = 8
+	                                                            // 예2) iPOCLast는 8, iNumPicRcvd는 8, iTimeOffset은 4 POCCurr = 8 - (8 - 4) = 4
       
 	  // [KSI] TEncTop에 정의된 PictureList(참조 영상과 현재 입력 영상으로 구성된 리스트)
-	  // [KSI] TAppEncTop에 정의된 ReconPictureList, BitstreamList에서 currentPOC를 위해 할당된 item들을 찾아 하나씩 할당한다.
+	  // [KSI] TAppEncTop에 정의된 ReconPictureList, BitstreamList에서 currentPOC의 ENCODING 결과를 보관하기 위해 할당된 item들을 찾아 하나씩 할당한다.
+
+	  // [KSI] 입력 : TEncTop::m_cListPic, TAppEncTop::m_cListPicYuvRec, TAppEncTop::m_cListBitstream
+	  //            : iNumPicRcvd, iTimeOffset, uiPOCCurr
+	  // [KSI] 출력 : pcPic; uiPOCCurr에 해당하는 원본/RECON/Bitstream을 보관하고 있는 객체.
+	  //            : pcPicYuvRecOut; uiPOCCurr에 해당하는 RECON Bitmap을 보관 할 객체.
+	  //            : pcBitstreamOut; uiPOCCurr에 해당하는 Encoded Bitstream을 보관 할 객체.
       xGetBuffer( rcListPic, rcListPicYuvRecOut, rcListBitstreamOut, iNumPicRcvd, iTimeOffset,  pcPic, pcPicYuvRecOut, pcBitstreamOut, uiPOCCurr );
       
       // save original picture
+	  // [KSI] Encoding 도중 원본 Bitmap에 여러 처리를 하기 때문에, 원본이 손상된다.
+	  // [KSI] 나중에 원본을 복원하기 위하여 임시 저장소에 보관해 둔다.
       cPicOrg.create( pcPic->getPicYuvOrg()->getWidth(), pcPic->getPicYuvOrg()->getHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
       pcPic->getPicYuvOrg()->copyToPic( &cPicOrg );
       
@@ -162,6 +177,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       
       //  Slice data initialization
       TComSlice*      pcSlice;
+	  // [KSI] 입력 : pcPic, iPOCLast, uiPOCCurr, iNumPicRcvd, iTimeOffset, iDepth
+	  // [KSI] 출력 : pcSlice; pcPic에서 할당한 TComSlice를 현재 상황에 맞게 설정.
+	  //            :          여기에서 SliceType을 설정하므로, Multiview의 BaseViewComponent가 아닌 경우
+	  //            :          Anchor Frame의 Type을 I에서 P/B로 강제 설정하는 처리를 추가 해야한다. 중요 중요 중요.
       m_pcSliceEncoder->initEncSlice ( pcPic, iPOCLast, uiPOCCurr, iNumPicRcvd, iTimeOffset, iDepth, pcSlice );
       
       //  Set SPS
@@ -169,9 +188,96 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       pcSlice->setPPS( m_pcEncTop->getPPS() );
       
       //  Set reference list
-	  // [KSI] 여기에서 Multiview 관련 처리를 실행한다.
+	  // [KSI] TEncTop::m_cPicList의 내용을 기반으로 현재 POC의 TComPic을 중심으로 과거, 미래의 Reference Picture들을 찾는다.
+	  // [KSI] 찾은 Reference Picture들의
+	  // [KSI]      1. TComPic객체의 포인터를 TComSlice::m_apcRefPicList에 등록.
+	  // [KSI]      2. TComSlice::m_aiRefPOCList에 등록된 TComPic객체의 POC를 등록.
+	  // [KSI]      3. TComSlice::m_aiNumRefIdx에 등록된 TComPic객체의 갯수를 등록.
+	  // [KSI] 이 과정에 추가로 MVC 설정에 따라 Anchor/NonAnchor Picture들의 Pointer/POC/갯수를 등록 해 둔다.
+	  // [KSI] 현재 MVC 규칙상, 다른 View의 같은 POC를 가져올 것이기 때문에, TComPic에 따로 정보가 추가 될 필요가 없다.
+	  // [KSI] ViewID와 같은 정보는 이미 SPS에 있고, 디코딩 할 때에도 역시 SPS를 참조 하면 되기 때문이다.
       pcSlice->setRefPicList ( rcListPic );
-      
+
+	  // [KSI] Reference List의 맨 마지막에 Inter-view용 reference picture를 설정한다.
+	  if ( m_pcCfg->getMVC() )
+	  {
+		  UInt uiCurrentViewIndex;
+		  Int iNumRefIdx;
+		  Bool bAnchor;
+		  for ( uiCurrentViewIndex = 0; uiCurrentViewIndex <= m_pcCfg->getNumViewsMinusOne(); uiCurrentViewIndex++ )
+		  {
+			  if ( m_pcCfg->getViewOrder()[uiCurrentViewIndex] == m_pcCfg->getCurrentViewID() )
+				  break;
+		  }
+
+		  bAnchor = (uiPOCCurr == 0 || uiPOCCurr % m_pcCfg->getIntraPeriod() == 0 ) ? true : false;
+
+		  if ( bAnchor )
+		  {
+			  iNumRefIdx = pcSlice->getNumRefIdx(REF_PIC_LIST_0);
+			  for ( UInt i = 0; i < m_pcCfg->getNumAnchorRefsL0()[uiCurrentViewIndex]; i++ )
+			  {
+				  UInt uiRefViewIndex;
+				  for ( uiRefViewIndex = 0; uiRefViewIndex <= m_pcCfg->getNumViewsMinusOne(); uiRefViewIndex++ )
+				  {
+					  if ( m_pcCfg->getViewOrder()[uiCurrentViewIndex] == m_pcCfg->getAnchorRefL0()[uiCurrentViewIndex][i] )
+						  break;
+				  }
+				  pcSlice->setRefPic( m_pcEncTop->getMultiView()->getMultiViewPicture(uiRefViewIndex, uiPOCCurr), REF_PIC_LIST_0, iNumRefIdx);
+				  pcSlice->setRefPOC(uiPOCCurr, REF_PIC_LIST_0, iNumRefIdx);
+				  iNumRefIdx++;
+				  pcSlice->setNumRefIdx(REF_PIC_LIST_0, iNumRefIdx);
+			  }
+
+			  iNumRefIdx = pcSlice->getNumRefIdx(REF_PIC_LIST_1);
+			  for ( UInt i = 0; i < m_pcCfg->getNumAnchorRefsL1()[uiCurrentViewIndex]; i++ )
+			  {
+				  UInt uiRefViewIndex;
+				  for ( uiRefViewIndex = 0; uiRefViewIndex <= m_pcCfg->getNumViewsMinusOne(); uiRefViewIndex++ )
+				  {
+					  if ( m_pcCfg->getViewOrder()[uiCurrentViewIndex] == m_pcCfg->getAnchorRefL1()[uiCurrentViewIndex][i] )
+						  break;
+				  }
+				  pcSlice->setRefPic( m_pcEncTop->getMultiView()->getMultiViewPicture(uiRefViewIndex, uiPOCCurr), REF_PIC_LIST_1, iNumRefIdx);
+				  pcSlice->setRefPOC(uiPOCCurr, REF_PIC_LIST_1, iNumRefIdx);
+				  iNumRefIdx++;
+				  pcSlice->setNumRefIdx(REF_PIC_LIST_1, iNumRefIdx);
+			  }
+		  }
+		  else
+		  {
+			  iNumRefIdx = pcSlice->getNumRefIdx(REF_PIC_LIST_0);
+			  for ( UInt i = 0; i < m_pcCfg->getNumNonAnchorRefsL0()[uiCurrentViewIndex]; i++ )
+			  {
+				  UInt uiRefViewIndex;
+				  for ( uiRefViewIndex = 0; uiRefViewIndex <= m_pcCfg->getNumViewsMinusOne(); uiRefViewIndex++ )
+				  {
+					  if ( m_pcCfg->getViewOrder()[uiCurrentViewIndex] == m_pcCfg->getNonAnchorRefL0()[uiCurrentViewIndex][i] )
+						  break;
+				  }
+				  pcSlice->setRefPic( m_pcEncTop->getMultiView()->getMultiViewPicture(uiRefViewIndex, uiPOCCurr), REF_PIC_LIST_0, iNumRefIdx);
+				  pcSlice->setRefPOC(uiPOCCurr, REF_PIC_LIST_0, iNumRefIdx);
+				  iNumRefIdx++;
+				  pcSlice->setNumRefIdx(REF_PIC_LIST_0, iNumRefIdx);
+			  }
+
+			  iNumRefIdx = pcSlice->getNumRefIdx(REF_PIC_LIST_1);
+			  for ( UInt i = 0; i < m_pcCfg->getNumNonAnchorRefsL1()[uiCurrentViewIndex]; i++ )
+			  {
+				  UInt uiRefViewIndex;
+				  for ( uiRefViewIndex = 0; uiRefViewIndex <= m_pcCfg->getNumViewsMinusOne(); uiRefViewIndex++ )
+				  {
+					  if ( m_pcCfg->getViewOrder()[uiCurrentViewIndex] == m_pcCfg->getNonAnchorRefL1()[uiCurrentViewIndex][i] )
+						  break;
+				  }
+				  pcSlice->setRefPic( m_pcEncTop->getMultiView()->getMultiViewPicture(uiRefViewIndex, uiPOCCurr), REF_PIC_LIST_1, iNumRefIdx);
+				  pcSlice->setRefPOC(uiPOCCurr, REF_PIC_LIST_1, iNumRefIdx);
+				  iNumRefIdx++;
+				  pcSlice->setNumRefIdx(REF_PIC_LIST_1, iNumRefIdx);
+			  }
+		  }
+	  }
+	  
       //  Slice info. refinement
       if ( (pcSlice->getSliceType() == B_SLICE) && (pcSlice->getNumRefIdx(REF_PIC_LIST_1) == 0) )
       {
@@ -180,6 +286,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       }
       
       // Generalized B
+	  // [KSI] MVC는 해당 없음.
       if ( m_pcCfg->getUseGPB() )
       {
         if (pcSlice->getSliceType() == P_SLICE)
@@ -204,9 +311,10 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       uiColDir = 1-uiColDir;
       
       //-------------------------------------------------------------
+	  // [KSI] 왜인지는 모르겠지만, 여기에서 TComSlice::m_aiRefPOCList를 설정한다.
       pcSlice->setRefPOCList();
       
-#if MS_NO_BACK_PRED_IN_B0
+#if MS_NO_BACK_PRED_IN_B0 // disable backward prediction when list1 == list0, and disable list1 search, JCTVC-C278
       pcSlice->setNoBackPredFlag( false );
       if ( pcSlice->getSliceType() == B_SLICE )
       {
@@ -244,6 +352,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 
       pcSlice->setRounding(b);
 #endif
+	  // [KSI] 여기에서 Syntax로 표현하기 위한 시나리오들을 모두 만들어낸다.
       m_pcSliceEncoder->precompressSlice( pcPic );
       m_pcSliceEncoder->compressSlice   ( pcPic );
       

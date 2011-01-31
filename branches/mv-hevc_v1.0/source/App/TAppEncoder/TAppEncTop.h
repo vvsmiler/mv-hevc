@@ -41,6 +41,7 @@
 #include "../../Lib/TLibVideoIO/TVideoIOBits.h"
 #include "../../Lib/TLibCommon/TComBitStream.h"
 #include "TAppEncCfg.h"
+#include "TAppEncMultiView.h"
 
 // ====================================================================================================================
 // Class definition
@@ -64,6 +65,9 @@ private:
   TComList<TComBitstream*>   m_cListBitstream;              ///< list of bitstreams
   
   Int                        m_iFrameRcvd;                  ///< number of received frames
+
+  TAppEncMultiView           m_cFwdView;                    ///< multiview reference of current view
+  TAppEncMultiView           m_cBwdView;                    ///< multiview reference of current view
   
 protected:
   // initialization

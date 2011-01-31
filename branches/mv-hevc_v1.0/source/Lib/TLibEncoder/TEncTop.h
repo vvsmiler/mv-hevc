@@ -41,6 +41,7 @@
 #include "../TLibCommon/TComPrediction.h"
 #include "../TLibCommon/TComTrQuant.h"
 #include "../TLibCommon/TComBitStream.h"
+#include "../TLibCommon/TComMultiView.h"
 
 #include "../TLibVideoIO/TVideoIOYuv.h"
 #include "../TLibVideoIO/TVideoIOBits.h"
@@ -66,7 +67,7 @@ private:
   Int                     m_iPOCLast;                     ///< time index (POC)
   Int                     m_iNumPicRcvd;                  ///< number of received pictures
   UInt                    m_uiNumAllPicCoded;             ///< number of coded pictures
-  TComList<TComPic*>      m_cListPic;                     ///< dynamic list of pictures
+  TComList<TComPic*>      m_cListPic;                     ///< dynamic list of pictures [KSI] 이녀석이 모든 Enc과정에 사용하는 Picture List의 원본.
   
   // encoder search
   TEncSearch              m_cSearch;                      ///< encoder search class
@@ -80,6 +81,8 @@ private:
   TEncCavlc               m_cCavlcCoder;                  ///< CAVLC encoder
   TEncSbac                m_cSbacCoder;                   ///< SBAC encoder
   TEncBinCABAC            m_cBinCoderCABAC;               ///< bin coder CABAC
+  TComMultiView           m_cMultiView;                   ///< [KSI] MultiView reference list
+
   
   // processing unit
   TEncGOP                 m_cGOPEncoder;                  ///< GOP encoder
@@ -99,6 +102,7 @@ private:
   
 protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
+  Void  xAddMultiView     ( TComList<TComPicYuv*>& rcListFwdViews, TComList<TComPicYuv*>& rcListBwdViews ); ///< [KSI] add received multiviw reference pictures to multiview reference list
   Void  xInitSPS          ();                             ///< initialize SPS from encoder options
   
 public:
@@ -120,6 +124,7 @@ public:
   TComTrQuant*            getTrQuant            () { return  &m_cTrQuant;             }
   TComLoopFilter*         getLoopFilter         () { return  &m_cLoopFilter;          }
   TEncAdaptiveLoopFilter* getAdaptiveLoopFilter () { return  &m_cAdaptiveLoopFilter;  }
+  TComMultiView*          getMultiView          () { return  &m_cMultiView;           } // [KSI] Multiview reference list
   
   TEncGOP*                getGOPEncoder         () { return  &m_cGOPEncoder;          }
   TEncSlice*              getSliceEncoder       () { return  &m_cSliceEncoder;        }
@@ -141,9 +146,14 @@ public:
   // encoder function
   // -------------------------------------------------------------------------------------------------------------------
   
+  // [KSI] MultiView를 위해 Interface 수정.
   /// encode several number of pictures until end-of-sequence
-  Void encode( bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut,
-              TComList<TComBitstream*>& rcListBitstreamOut, Int& iNumEncoded );
+  Void encode( bool bEos, TComPicYuv* pcPicYuvOrg,
+	           TComList<TComPicYuv*>& rcListFwdViews,
+	           TComList<TComPicYuv*>& rcListBwdViews,
+	           TComList<TComPicYuv*>& rcListPicYuvRecOut,
+			   TComList<TComBitstream*>& rcListBitstreamOut,
+			   Int& iNumEncoded );
   
 };
 

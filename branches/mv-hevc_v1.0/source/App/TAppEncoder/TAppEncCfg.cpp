@@ -518,7 +518,8 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 	  cfg_InputFile += ".yuv";
 	  cfg_BitstreamFile += '_';
 	  cfg_BitstreamFile += _itoa(m_uiCurrentViewID, pos, 10);
-	  cfg_BitstreamFile += ".bin";  
+	  cfg_BitstreamFile += ".bin";
+	  m_pchFileNamePrefix = cfg_ReconFile.empty() ? NULL : strdup(cfg_ReconFile.c_str());
 	  cfg_ReconFile += '_';
 	  cfg_ReconFile += _itoa(m_uiCurrentViewID, pos, 10);
 	  cfg_ReconFile += ".yuv";
