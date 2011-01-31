@@ -12,9 +12,9 @@ HEVC에 목표로 하는 기능을 추가하기 위해서는 다음의 두 가�
   * Encoder
   # NAL Header에 MVC 관련 추가 변수.
   # SPS에 MVC 관련 추가 변수.
-  # Slice Header MVC 관련 추가 변수.
   # Slice Header의 Reference Picture Order Modify 기능에 MVC 고려.
   # 여러 채널의 Bitstream을 하나의 Bitstream으로 Assembly
   * Decoder
-  # 여러 view의 SPS/PPS 유지.
-  # 여러 view의 Reference Picture 유지.
+  # 같은 POC를 가지고, View Order로 정렬된 View Component들을 하나의 Operation Unit으로 취급.
+  # SPS에 정의된 View Order라고 가정 하고 Decoding 시작함.
+  # View Component 만큼의 Reference Picture List를 유지 해야 함.
