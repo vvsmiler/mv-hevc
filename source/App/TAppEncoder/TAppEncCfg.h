@@ -140,6 +140,7 @@ protected:
 #endif
 
   // for multiview
+  char*     m_pchFileNamePrefix;                              ///< prefix of multiview file name
   Bool		m_bMVC;                                           ///< flag for using MVC
   UInt		m_uiCurrentViewID;                                ///< current encoding view id
   UInt		m_uiProcessingViewID;                             ///< current parsing view id

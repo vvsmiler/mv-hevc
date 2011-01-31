@@ -155,6 +155,10 @@ Void TEncTop::init()
   
   // initialize encoder search class
   m_cSearch.init( this, &m_cTrQuant, m_iSearchRange, m_iFastSearch, 0, &m_cEntropyCoder, &m_cRdCost, getRDSbacCoder(), getRDGoOnSbacCoder() );
+
+  // initialize multiview reference list
+  // [KSI] Multiview reference list를 초기화 한다.
+  m_cMultiView.openMultiView( m_uiNumViewsMinusOne+1, m_iGOPSize, m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
 }
 
 // ====================================================================================================================
@@ -176,6 +180,7 @@ Void TEncTop::deletePicBuffer()
   }
 }
 
+// [KSI] MultiView를 위해 Interface 수정.
 /**
  - Application has picture buffer list with size of GOP + 1
  - Picture buffer list acts like as ring buffer
@@ -183,18 +188,38 @@ Void TEncTop::deletePicBuffer()
  .
  \param   bEos                true if end-of-sequence is reached
  \param   pcPicYuvOrg         original YUV picture
+ \param   rcListFwdViews      Fwd multiview reference list of current picture
+ \param   rcListBwdViews      Bwd multiview reference list of current picture
  \retval  rcListPicYuvRecOut  list of reconstruction YUV pictures
  \retval  rcListBitstreamOut  list of output bitstreams
  \retval  iNumEncoded         number of encoded pictures
  */
-Void TEncTop::encode( bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>& rcListPicYuvRecOut, TComList<TComBitstream*>& rcListBitstreamOut, Int& iNumEncoded )
+Void TEncTop::encode( bool bEos, TComPicYuv* pcPicYuvOrg,
+					  TComList<TComPicYuv*>& rcListFwdViews,
+					  TComList<TComPicYuv*>& rcListBwdViews,
+					  TComList<TComPicYuv*>& rcListPicYuvRecOut,
+					  TComList<TComBitstream*>& rcListBitstreamOut,
+					  Int& iNumEncoded )
 {
   TComPic* pcPicCurr = NULL;
   
   // get original YUV
+  // [KSI] TEncTop::m_cPicList에서 적절히 초기화해서 준비 된 TComPic을 하나 얻어 온다. 없으면 만든다.
+  // [KSI] 여기에서 m_iPOCLast 변수가 증가한다.
+  // [KSI] 여기에서 m_iNumPicRcvd 변수가 증가한다.
   xGetNewPicBuffer( pcPicCurr );
+  // [KSI] 위에서 얻어온 TComPic에 TComPicYuv를 복사한다. 그리고, 그 다음부터는 pcPicYuvOrg의 쓸모는 끝난다.
   pcPicYuvOrg->copyToPic( pcPicCurr->getPicYuvOrg() );
+
+  // [KSI] Inter-view prediction을 위해 기 ENC된 View Object의 RECON 파일에서 읽어온 프레임을 Multiview reference list에 설정한다.
+  // [KSI] SPS의 설정에 따라, 여러 view를 reference할 수 있으므로, Multiview reference list는 조금 복잡한 편이다.
+  xAddMultiView(rcListFwdViews, rcListBwdViews);
   
+  // [KSI] 첫 Picture가 아니고, m_iNumPicRcvd가 GOP와 다르고, GOP는 0이 아니며, EOS가 아닐 때는 그냥 리턴한다.
+  // [KSI] GOP 단위로 m_cPicList에 원본을 쌓은다음 GOP 만큼을 한번에 Encode하기 위함이다.
+  // [KSI] m_cPicList의 각 Element는 Picture의 원본/RECON/Bitstream을 모두 보관하고 있다. --> Reference List의 원본으로 쓸 수 있는 이유.
+  // [KSI] 첫 Picture는 바로 Encode하기 때문에, GOP 만큼 읽어오면 다음 I Picture 대상 까지 읽어오게 된다.
+  // [KSI] 자연스럽게 Open GOP 구조의 Hier. B Encoding Structure를 구성하게 된다.
   if ( m_iPOCLast != 0 && ( m_iNumPicRcvd != m_iGOPSize && m_iGOPSize ) && !bEos )
   {
     iNumEncoded = 0;
@@ -202,6 +227,10 @@ Void TEncTop::encode( bool bEos, TComPicYuv* pcPicYuvOrg, TComList<TComPicYuv*>&
   }
   
   // compress GOP
+  // [KSI] 본 프로젝트의 목적인 MVC의 경우에 한정하고, GOP == 8 로 설정 된 상태를 가정하면 다음과 같은 상태임을 추정할 수 있다.
+  // [KSI] 첫 Picture가 아니라면, 여기까지 진행 했을 때, m_cListPic는 다음과 같은 모습일 것이다.
+  // [KSI] [현 GOP의 I] [b] [B] [b] [B] [b] [B] [b] [다음 GOP의 I]
+  // [KSI] 이 때, 현 GOP의 I는 이미 Encoding이 완료 된 상태로 존재 할 것이며, 가장 먼저 Encoding 될 대상은 다음 GOP의 I이다.
   m_cGOPEncoder.compressGOP( m_iPOCLast, m_iNumPicRcvd, m_cListPic, rcListPicYuvRecOut, rcListBitstreamOut );
   
   iNumEncoded         = m_iNumPicRcvd;
@@ -270,6 +299,74 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
   // mark it should be extended
   rpcPic->getPicYuvRec()->setBorderExtension(false);
 }
+
+Void  TEncTop::xAddMultiView( TComList<TComPicYuv*>& rcListFwdViews, TComList<TComPicYuv*>& rcListBwdViews )
+{
+  UInt uiCurrentViewIndex;
+  Bool bAnchor;
+  TComList<TComPicYuv*>::iterator itor;
+  for ( uiCurrentViewIndex = 0; uiCurrentViewIndex <= m_uiNumViewsMinusOne; uiCurrentViewIndex++ )
+  {
+	  if ( m_auiViewOrder[uiCurrentViewIndex] == m_uiCurrentViewID )
+		  break;
+  }
+
+  bAnchor = (m_iPOCLast == 0 || m_iPOCLast % m_uiIntraPeriod == 0 ) ? true : false;
+
+  if ( bAnchor )
+  {
+	  itor = rcListFwdViews.begin();
+	  for ( UInt i = 0; (i < m_auiNumAnchorRefsL0[uiCurrentViewIndex]) && (itor != rcListFwdViews.end()); i++, ++itor )
+	  {
+		  UInt uiRefViewIndex;
+		  for ( uiRefViewIndex = 0; uiRefViewIndex <= m_uiNumViewsMinusOne; uiRefViewIndex++ )
+		  {
+			  if ( m_auiViewOrder[uiCurrentViewIndex] == m_aauiAnchorRefL0[uiCurrentViewIndex][i] )
+				  break;
+		  }
+		  m_cMultiView.addMultiViewPicture(uiRefViewIndex, *itor, m_iPOCLast);
+	  }
+
+	  itor = rcListBwdViews.begin();
+	  for ( UInt i = 0; (i < m_auiNumAnchorRefsL1[uiCurrentViewIndex]) && (itor != rcListBwdViews.end()); i++, ++itor )
+	  {
+		  UInt uiRefViewIndex;
+		  for ( uiRefViewIndex = 0; uiRefViewIndex <= m_uiNumViewsMinusOne; uiRefViewIndex++ )
+		  {
+			  if ( m_auiViewOrder[uiCurrentViewIndex] == m_aauiAnchorRefL1[uiCurrentViewIndex][i] )
+				  break;
+		  }
+		  m_cMultiView.addMultiViewPicture(uiRefViewIndex, *itor, m_iPOCLast);
+	  }
+  }
+  else
+  {
+	  itor = rcListFwdViews.begin();
+	  for ( UInt i = 0; (i < m_auiNumNonAnchorRefsL0[uiCurrentViewIndex]) && (itor != rcListFwdViews.end()); i++, ++itor )
+	  {
+		  UInt uiRefViewIndex;
+		  for ( uiRefViewIndex = 0; uiRefViewIndex <= m_uiNumViewsMinusOne; uiRefViewIndex++ )
+		  {
+			  if ( m_auiViewOrder[uiCurrentViewIndex] == m_aauiNonAnchorRefL0[uiCurrentViewIndex][i] )
+				  break;
+		  }
+		  m_cMultiView.addMultiViewPicture(uiRefViewIndex, *itor, m_iPOCLast);
+	  }
+
+	  itor = rcListBwdViews.begin();
+	  for ( UInt i = 0; (i < m_auiNumNonAnchorRefsL1[uiCurrentViewIndex]) && (itor != rcListBwdViews.end()); i++, ++itor )
+	  {
+		  UInt uiRefViewIndex;
+		  for ( uiRefViewIndex = 0; uiRefViewIndex <= m_uiNumViewsMinusOne; uiRefViewIndex++ )
+		  {
+			  if ( m_auiViewOrder[uiCurrentViewIndex] == m_aauiNonAnchorRefL1[uiCurrentViewIndex][i] )
+				  break;
+		  }
+		  m_cMultiView.addMultiViewPicture(uiRefViewIndex, *itor, m_iPOCLast);
+	  }
+  }
+}
+
 
 Void TEncTop::xInitSPS()
 {

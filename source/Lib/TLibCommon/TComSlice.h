@@ -280,8 +280,6 @@ public:
 	  assert(col < m_auiNumNonAnchorRefsL1[row]);
 	  m_aauiNonAnchorRefL1[row][col] = val;
   }
-
-
 };
 
 /// PPS class
