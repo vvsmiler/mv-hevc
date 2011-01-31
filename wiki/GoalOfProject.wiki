@@ -1,4 +1,4 @@
-#summary 이 프로젝트의 목표를 명시 한다.
+#summary 목표
 #labels Phase-Requirements
 
 = 목표 =
@@ -6,7 +6,6 @@ HEVC에 Multi view video coding 기능을 추가 한다.
 
 = 개요 =
 최근 표준화를 진행 중인 HEVC에 H.264에 적용 된 Multi view video coding 기능을 Poring 한다.
-HEVC에 목표로 하는 기능을 추가하기 위해서는 다음의 두 가지 추가 coding tools이 필요하다.
 
 = 기존 Video Coding Flow와 다른 점 =
   * Encoder
