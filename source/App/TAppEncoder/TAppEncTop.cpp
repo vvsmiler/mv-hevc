@@ -218,7 +218,7 @@ Void TAppEncTop::encode()
 	{
 		bAnchor = (m_iFrameRcvd == 0 || m_iFrameRcvd % m_iIntraPeriod == 0 ) ? true : false;
 		m_cFwdView.generateMultiViewList(pcListFwdView, bAnchor);
-		m_cFwdView.generateMultiViewList(pcListBwdView, bAnchor);
+		m_cBwdView.generateMultiViewList(pcListBwdView, bAnchor);
 	}
 	
     // increase number of received frames

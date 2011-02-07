@@ -525,6 +525,9 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 	  cfg_ReconFile += ".yuv";
   }
 
+  if ( m_bMVC && !m_uiCurrentViewID )
+	  m_bMVC = false;
+
   /* convert std::string to c string for compatability */
   m_pchInputFile = cfg_InputFile.empty() ? NULL : strdup(cfg_InputFile.c_str());
   m_pchBitstreamFile = cfg_BitstreamFile.empty() ? NULL : strdup(cfg_BitstreamFile.c_str());

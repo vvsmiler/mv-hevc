@@ -213,7 +213,7 @@ Void TEncTop::encode( bool bEos, TComPicYuv* pcPicYuvOrg,
 
   // [KSI] Inter-view prediction을 위해 기 ENC된 View Object의 RECON 파일에서 읽어온 프레임을 Multiview reference list에 설정한다.
   // [KSI] SPS의 설정에 따라, 여러 view를 reference할 수 있으므로, Multiview reference list는 조금 복잡한 편이다.
-  xAddMultiView(rcListFwdViews, rcListBwdViews);
+  if ( m_bMVC ) xAddMultiView(rcListFwdViews, rcListBwdViews);
   
   // [KSI] 첫 Picture가 아니고, m_iNumPicRcvd가 GOP와 다르고, GOP는 0이 아니며, EOS가 아닐 때는 그냥 리턴한다.
   // [KSI] GOP 단위로 m_cPicList에 원본을 쌓은다음 GOP 만큼을 한번에 Encode하기 위함이다.
@@ -321,7 +321,7 @@ Void  TEncTop::xAddMultiView( TComList<TComPicYuv*>& rcListFwdViews, TComList<TC
 		  UInt uiRefViewIndex;
 		  for ( uiRefViewIndex = 0; uiRefViewIndex <= m_uiNumViewsMinusOne; uiRefViewIndex++ )
 		  {
-			  if ( m_auiViewOrder[uiCurrentViewIndex] == m_aauiAnchorRefL0[uiCurrentViewIndex][i] )
+			  if ( m_auiViewOrder[uiRefViewIndex] == m_aauiAnchorRefL0[uiCurrentViewIndex][i] )
 				  break;
 		  }
 		  m_cMultiView.addMultiViewPicture(uiRefViewIndex, *itor, m_iPOCLast);
@@ -333,7 +333,7 @@ Void  TEncTop::xAddMultiView( TComList<TComPicYuv*>& rcListFwdViews, TComList<TC
 		  UInt uiRefViewIndex;
 		  for ( uiRefViewIndex = 0; uiRefViewIndex <= m_uiNumViewsMinusOne; uiRefViewIndex++ )
 		  {
-			  if ( m_auiViewOrder[uiCurrentViewIndex] == m_aauiAnchorRefL1[uiCurrentViewIndex][i] )
+			  if ( m_auiViewOrder[uiRefViewIndex] == m_aauiAnchorRefL1[uiCurrentViewIndex][i] )
 				  break;
 		  }
 		  m_cMultiView.addMultiViewPicture(uiRefViewIndex, *itor, m_iPOCLast);
@@ -347,7 +347,7 @@ Void  TEncTop::xAddMultiView( TComList<TComPicYuv*>& rcListFwdViews, TComList<TC
 		  UInt uiRefViewIndex;
 		  for ( uiRefViewIndex = 0; uiRefViewIndex <= m_uiNumViewsMinusOne; uiRefViewIndex++ )
 		  {
-			  if ( m_auiViewOrder[uiCurrentViewIndex] == m_aauiNonAnchorRefL0[uiCurrentViewIndex][i] )
+			  if ( m_auiViewOrder[uiRefViewIndex] == m_aauiNonAnchorRefL0[uiCurrentViewIndex][i] )
 				  break;
 		  }
 		  m_cMultiView.addMultiViewPicture(uiRefViewIndex, *itor, m_iPOCLast);
@@ -359,7 +359,7 @@ Void  TEncTop::xAddMultiView( TComList<TComPicYuv*>& rcListFwdViews, TComList<TC
 		  UInt uiRefViewIndex;
 		  for ( uiRefViewIndex = 0; uiRefViewIndex <= m_uiNumViewsMinusOne; uiRefViewIndex++ )
 		  {
-			  if ( m_auiViewOrder[uiCurrentViewIndex] == m_aauiNonAnchorRefL1[uiCurrentViewIndex][i] )
+			  if ( m_auiViewOrder[uiRefViewIndex] == m_aauiNonAnchorRefL1[uiCurrentViewIndex][i] )
 				  break;
 		  }
 		  m_cMultiView.addMultiViewPicture(uiRefViewIndex, *itor, m_iPOCLast);

@@ -336,6 +336,10 @@ private:
 #if MS_NO_BACK_PRED_IN_B0
   Bool        m_bNoBackPredFlag;
 #endif
+
+  // mvc
+  Bool        m_bMVC;
+  Bool        m_bAnchor;
   
 public:
   TComSlice();
@@ -418,6 +422,11 @@ public:
   Bool getNoBackPredFlag() { return m_bNoBackPredFlag; }
   Void setNoBackPredFlag( Bool b ) { m_bNoBackPredFlag = b; }
 #endif
+
+  Void setMVC( Bool bMVC )           { m_bMVC = bMVC; }
+  Void setAnchor( Bool bAnchor )     { m_bAnchor = bAnchor; }
+  Bool getMVC( Void )                { return m_bMVC; }
+  Bool getAnchor( Void )             { return m_bAnchor; }
   
 protected:
   TComPic*  xGetRefPic  (TComList<TComPic*>& rcListPic,
