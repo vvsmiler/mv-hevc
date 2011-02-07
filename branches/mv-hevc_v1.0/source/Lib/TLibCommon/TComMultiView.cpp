@@ -29,7 +29,7 @@ Void TComMultiView::closeMultiView( Void )
 		for ( UInt i = 0; i < m_uiNumViews; i++ )
 		{
 			TComList<TComPic*>::iterator iter = m_acListMultiView[i].begin();
-			do 
+			while ( iter != m_acListMultiView[i].end())
 			{
 				if ( (*iter) != NULL )
 				{
@@ -37,7 +37,8 @@ Void TComMultiView::closeMultiView( Void )
 					delete (*iter);
 					(*iter) = NULL;
 				}
-			} while ( ++iter != m_acListMultiView[i].end() );
+				++iter;
+			}
 		}
 
 		delete m_acListMultiView;

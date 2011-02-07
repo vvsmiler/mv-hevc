@@ -65,6 +65,9 @@ TComSlice::TComSlice()
 #if MS_NO_BACK_PRED_IN_B0
   m_bNoBackPredFlag = false;
 #endif
+
+  m_bMVC               = false;
+  m_bAnchor            = false;
 }
 
 TComSlice::~TComSlice()
