@@ -36,6 +36,8 @@
 #include "CommonDef.h"
 #include "TComSlice.h"
 #include "TComPic.h"
+#include "TComMultiView.h"
+
 
 TComSlice::TComSlice()
 {
@@ -65,9 +67,6 @@ TComSlice::TComSlice()
 #if MS_NO_BACK_PRED_IN_B0
   m_bNoBackPredFlag = false;
 #endif
-
-  m_bMVC               = false;
-  m_bAnchor            = false;
 }
 
 TComSlice::~TComSlice()
@@ -301,7 +300,6 @@ Void TComSlice::setRefPOCList       ()
   }
 }
 
-// [KSI] 여기에서 Multiview Referecne Picture를 pick up 한 다음 RefL0/RefL1에 설정한다.
 Void TComSlice::setRefPicList       ( TComList<TComPic*>& rcListPic )
 {
   if (m_eSliceType == I_SLICE)
@@ -419,6 +417,71 @@ Void TComSlice::setRefPicList       ( TComList<TComPic*>& rcListPic )
     
     m_aiNumRefIdx[eRefPicList] = uiActualListSize;
   }
+}
+
+// [KSI] 여기에서 Multiview Referecne Picture를 pick up 한 다음 RefL0/RefL1에 설정한다.
+Void TComSlice::setInterviewRefPicList( TComMultiView* pcMultiView, UInt uiPOCCurr, RefPicList e, Bool bAnchor )
+{
+	UInt uiCurrentViewIndex;
+	Int iNumRefIdx;
+	UInt uiNumRefs;
+	UInt* puiRefList;
+
+	for ( uiCurrentViewIndex = 0; uiCurrentViewIndex <= m_pcSPS->getNumViewsMinusOne(); uiCurrentViewIndex++ )
+	{
+		if ( m_pcSPS->getViewOrder()[uiCurrentViewIndex] == m_pcSPS->getCurrentViewID() )
+			break;
+	}
+
+	if ( bAnchor )
+	{
+		iNumRefIdx = 0;
+		if ( e == REF_PIC_LIST_0 )
+		{
+			uiNumRefs = m_pcSPS->getNumAnchorRefsL0()[uiCurrentViewIndex];
+			puiRefList = m_pcSPS->getAnchorRefL0()[uiCurrentViewIndex];
+		}
+		else if ( e == REF_PIC_LIST_1 )
+		{
+			uiNumRefs = m_pcSPS->getNumAnchorRefsL1()[uiCurrentViewIndex];
+			puiRefList = m_pcSPS->getAnchorRefL1()[uiCurrentViewIndex];
+		}
+
+		if ( m_pcSPS->getNumAnchorRefsL0()[uiCurrentViewIndex] )
+		{
+			setSliceType(P_SLICE);
+			if ( m_pcSPS->getNumAnchorRefsL1()[uiCurrentViewIndex] )
+				setSliceType(B_SLICE);
+		}
+	}
+	else
+	{
+		iNumRefIdx = getNumRefIdx(e);
+		if ( e == REF_PIC_LIST_0 )
+		{
+			uiNumRefs = m_pcSPS->getNumNonAnchorRefsL0()[uiCurrentViewIndex];
+			puiRefList = m_pcSPS->getNonAnchorRefL0()[uiCurrentViewIndex];
+		}
+		else if ( e == REF_PIC_LIST_1 )
+		{
+			uiNumRefs = m_pcSPS->getNumNonAnchorRefsL1()[uiCurrentViewIndex];
+			puiRefList = m_pcSPS->getNonAnchorRefL1()[uiCurrentViewIndex];
+		}
+	}
+
+	for ( UInt i = 0; i < uiNumRefs; i++ )
+	{
+		UInt uiRefViewIndex;
+		for ( uiRefViewIndex = 0; uiRefViewIndex <= m_pcSPS->getNumViewsMinusOne(); uiRefViewIndex++ )
+		{
+			if ( m_pcSPS->getViewOrder()[uiRefViewIndex] == puiRefList[i] )
+				break;
+		}
+		setRefPic( pcMultiView->getMultiViewPicture(uiRefViewIndex, uiPOCCurr), e, iNumRefIdx );
+		setRefPOC( uiPOCCurr, e, iNumRefIdx );
+		iNumRefIdx++;
+		setNumRefIdx( e, iNumRefIdx );
+	}
 }
 
 Void TComSlice::initEqualRef()

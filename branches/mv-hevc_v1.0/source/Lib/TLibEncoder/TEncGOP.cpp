@@ -196,104 +196,14 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 	  // [KSI] 이 과정에 추가로 MVC 설정에 따라 Anchor/NonAnchor Picture들의 Pointer/POC/갯수를 등록 해 둔다.
 	  // [KSI] 현재 MVC 규칙상, 다른 View의 같은 POC를 가져올 것이기 때문에, TComPic에 따로 정보가 추가 될 필요가 없다.
 	  // [KSI] ViewID와 같은 정보는 이미 SPS에 있고, 디코딩 할 때에도 역시 SPS를 참조 하면 되기 때문이다.
-	  //if ( m_pcCfg->getMVC() )
-	  //{
-		 // if ( ( pcSlice->getSliceType() == I_SLICE ) || !(uiPOCCurr == 0 || uiPOCCurr % m_pcCfg->getIntraPeriod() == 0) )
-		 // {
-			//  pcSlice->setRefPicList ( rcListPic );
-		 // }
-	  //}
-	  //else
-	  {
-		  pcSlice->setRefPicList ( rcListPic );
-	  }
-
+	  pcSlice->setRefPicList ( rcListPic );
 
 	  // [KSI] Reference List의 맨 마지막에 Inter-view용 reference picture를 설정한다.
 	  if ( m_pcCfg->getMVC() )
 	  {
-		  UInt uiCurrentViewIndex;
-		  Int iNumRefIdx;
-		  Bool bAnchor;
-		  for ( uiCurrentViewIndex = 0; uiCurrentViewIndex <= m_pcCfg->getNumViewsMinusOne(); uiCurrentViewIndex++ )
-		  {
-			  if ( m_pcCfg->getViewOrder()[uiCurrentViewIndex] == m_pcCfg->getCurrentViewID() )
-				  break;
-		  }
-
-		  bAnchor = (uiPOCCurr == 0 || uiPOCCurr % m_pcCfg->getIntraPeriod() == 0 ) ? true : false;
-
-		  pcSlice->setMVC( true );
-		  pcSlice->setAnchor( bAnchor );
-
-		  if ( bAnchor )
-		  {
-			  iNumRefIdx = 0;//pcSlice->getNumRefIdx(REF_PIC_LIST_0);
-			  for ( UInt i = 0; i < m_pcCfg->getNumAnchorRefsL0()[uiCurrentViewIndex]; i++ )
-			  {
-				  UInt uiRefViewIndex;
-				  for ( uiRefViewIndex = 0; uiRefViewIndex <= m_pcCfg->getNumViewsMinusOne(); uiRefViewIndex++ )
-				  {
-					  if ( m_pcCfg->getViewOrder()[uiRefViewIndex] == m_pcCfg->getAnchorRefL0()[uiCurrentViewIndex][i] )
-						  break;
-				  }
-				  pcSlice->setRefPic( m_pcEncTop->getMultiView()->getMultiViewPicture(uiRefViewIndex, uiPOCCurr), REF_PIC_LIST_0, iNumRefIdx);
-				  pcSlice->setRefPOC(uiPOCCurr, REF_PIC_LIST_0, iNumRefIdx);
-				  iNumRefIdx++;
-				  pcSlice->setNumRefIdx(REF_PIC_LIST_0, iNumRefIdx);
-
-				  pcSlice->setSliceType(P_SLICE);
-			  }
-
-			  iNumRefIdx = 0;//pcSlice->getNumRefIdx(REF_PIC_LIST_1);
-			  for ( UInt i = 0; i < m_pcCfg->getNumAnchorRefsL1()[uiCurrentViewIndex]; i++ )
-			  {
-				  UInt uiRefViewIndex;
-				  for ( uiRefViewIndex = 0; uiRefViewIndex <= m_pcCfg->getNumViewsMinusOne(); uiRefViewIndex++ )
-				  {
-					  if ( m_pcCfg->getViewOrder()[uiRefViewIndex] == m_pcCfg->getAnchorRefL1()[uiCurrentViewIndex][i] )
-						  break;
-				  }
-				  pcSlice->setRefPic( m_pcEncTop->getMultiView()->getMultiViewPicture(uiRefViewIndex, uiPOCCurr), REF_PIC_LIST_1, iNumRefIdx);
-				  pcSlice->setRefPOC(uiPOCCurr, REF_PIC_LIST_1, iNumRefIdx);
-				  iNumRefIdx++;
-				  pcSlice->setNumRefIdx(REF_PIC_LIST_1, iNumRefIdx);
-
-				  pcSlice->setSliceType(B_SLICE);
-			  }
-		  }
-		  else
-		  {
-			  iNumRefIdx = pcSlice->getNumRefIdx(REF_PIC_LIST_0);
-			  for ( UInt i = 0; i < m_pcCfg->getNumNonAnchorRefsL0()[uiCurrentViewIndex]; i++ )
-			  {
-				  UInt uiRefViewIndex;
-				  for ( uiRefViewIndex = 0; uiRefViewIndex <= m_pcCfg->getNumViewsMinusOne(); uiRefViewIndex++ )
-				  {
-					  if ( m_pcCfg->getViewOrder()[uiRefViewIndex] == m_pcCfg->getNonAnchorRefL0()[uiCurrentViewIndex][i] )
-						  break;
-				  }
-				  pcSlice->setRefPic( m_pcEncTop->getMultiView()->getMultiViewPicture(uiRefViewIndex, uiPOCCurr), REF_PIC_LIST_0, iNumRefIdx);
-				  pcSlice->setRefPOC(uiPOCCurr, REF_PIC_LIST_0, iNumRefIdx);
-				  iNumRefIdx++;
-				  pcSlice->setNumRefIdx(REF_PIC_LIST_0, iNumRefIdx);
-			  }
-
-			  iNumRefIdx = pcSlice->getNumRefIdx(REF_PIC_LIST_1);
-			  for ( UInt i = 0; i < m_pcCfg->getNumNonAnchorRefsL1()[uiCurrentViewIndex]; i++ )
-			  {
-				  UInt uiRefViewIndex;
-				  for ( uiRefViewIndex = 0; uiRefViewIndex <= m_pcCfg->getNumViewsMinusOne(); uiRefViewIndex++ )
-				  {
-					  if ( m_pcCfg->getViewOrder()[uiRefViewIndex] == m_pcCfg->getNonAnchorRefL1()[uiCurrentViewIndex][i] )
-						  break;
-				  }
-				  pcSlice->setRefPic( m_pcEncTop->getMultiView()->getMultiViewPicture(uiRefViewIndex, uiPOCCurr), REF_PIC_LIST_1, iNumRefIdx);
-				  pcSlice->setRefPOC(uiPOCCurr, REF_PIC_LIST_1, iNumRefIdx);
-				  iNumRefIdx++;
-				  pcSlice->setNumRefIdx(REF_PIC_LIST_1, iNumRefIdx);
-			  }
-		  }
+		  Bool bAnchor = (uiPOCCurr == 0 || uiPOCCurr % m_pcCfg->getIntraPeriod() == 0 ) ? true : false;
+		  pcSlice->setInterviewRefPicList( m_pcEncTop->getMultiView(), uiPOCCurr, REF_PIC_LIST_0, bAnchor);
+		  pcSlice->setInterviewRefPicList( m_pcEncTop->getMultiView(), uiPOCCurr, REF_PIC_LIST_1, bAnchor);
 	  }
 	  
       //  Slice info. refinement
