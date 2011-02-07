@@ -417,5 +417,18 @@ Void TEncTop::xInitSPS()
   
   m_cSPS.setBitDepth    ( g_uiBitDepth        );
   m_cSPS.setBitIncrement( g_uiBitIncrement    );
+
+  m_cSPS.setMVC                          (m_bMVC);
+  m_cSPS.setCurrentViewID                (m_uiCurrentViewID);
+  m_cSPS.setNumViewsMinusOne             (m_uiNumViewsMinusOne);
+  m_cSPS.setViewOrder                    (m_auiViewOrder);
+  m_cSPS.setNumAnchorRefsL0              (m_auiNumAnchorRefsL0);
+  m_cSPS.setNumAnchorRefsL1              (m_auiNumAnchorRefsL1);
+  m_cSPS.setAnchorRefL0                  (m_aauiAnchorRefL0);
+  m_cSPS.setAnchorRefL1                  (m_aauiAnchorRefL1);
+  m_cSPS.setNumNonAnchorRefsL0           (m_auiNumNonAnchorRefsL0);
+  m_cSPS.setNumNonAnchorRefsL1           (m_auiNumNonAnchorRefsL1);
+  m_cSPS.setNonAnchorRefL0               (m_aauiNonAnchorRefL0);
+  m_cSPS.setNonAnchorRefL1               (m_aauiNonAnchorRefL1);
 }
 

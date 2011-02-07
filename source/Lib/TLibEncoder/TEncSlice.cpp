@@ -184,21 +184,6 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int iPOCLast, UInt uiPOCCurr, Int 
   }
   eSliceType = (iPOCLast == 0 || uiPOCCurr % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
 
-  //if ( m_pcCfg->getMVC() && eSliceType == I_SLICE )
-  //{
-	 // UInt uiCurrentViewIndex;
-	 // for ( uiCurrentViewIndex = 0; uiCurrentViewIndex <= m_pcCfg->getNumViewsMinusOne(); uiCurrentViewIndex++ )
-	 // {
-		//  if ( m_pcCfg->getViewOrder()[uiCurrentViewIndex] == m_pcCfg->getCurrentViewID() )
-		//	  break;
-	 // }
-
-	 // if ( (m_pcCfg->getNumAnchorRefsL0()[uiCurrentViewIndex] != 0) && (m_pcCfg->getNonAnchorRefL1()[uiCurrentViewIndex] != 0) )
-		//  eSliceType = B_SLICE;
-	 // else if ( m_pcCfg->getNumAnchorRefsL0()[uiCurrentViewIndex] != 0 )
-		//  eSliceType = P_SLICE;	  
-  //}
-  
   rpcSlice->setSliceType    ( eSliceType );
   rpcSlice->setPOC          ( iPOCLast - iNumPicRcvd + iTimeOffset );
   
@@ -349,21 +334,6 @@ Void TEncSlice::initEncSlice( TComPic* pcPic, Int iPOCLast, UInt uiPOCCurr, Int 
   }
   eSliceType = (iPOCLast == 0 || uiPOCCurr % m_pcCfg->getIntraPeriod() == 0 || m_pcGOPEncoder->getGOPSize() == 0) ? I_SLICE : eSliceType;
 
-  //if ( m_pcCfg->getMVC() && eSliceType == I_SLICE )
-  //{
-	 // UInt uiCurrentViewIndex;
-	 // for ( uiCurrentViewIndex = 0; uiCurrentViewIndex <= m_pcCfg->getNumViewsMinusOne(); uiCurrentViewIndex++ )
-	 // {
-		//  if ( m_pcCfg->getViewOrder()[uiCurrentViewIndex] == m_pcCfg->getCurrentViewID() )
-		//	  break;
-	 // }
-
-	 // if ( (m_pcCfg->getNumAnchorRefsL0()[uiCurrentViewIndex] != 0) && (m_pcCfg->getNonAnchorRefL1()[uiCurrentViewIndex] != 0) )
-		//  eSliceType = B_SLICE;
-	 // else if ( m_pcCfg->getNumAnchorRefsL0()[uiCurrentViewIndex] != 0 )
-		//  eSliceType = P_SLICE;	  
-  //}
-  
   rpcSlice->setSliceType        ( eSliceType );
 #endif
   

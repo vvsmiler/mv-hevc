@@ -41,6 +41,7 @@
 #include "TComList.h"
 
 class TComPic;
+class TComMultiView;
 
 // ====================================================================================================================
 // Class definition
@@ -89,6 +90,7 @@ private:
 
   //===== Multi View Coding ====
   Bool		m_bMVC;                                           // flag for using MVC
+  UInt		m_uiCurrentViewID;                                // current encoding view id
   UInt		m_uiNumViewsMinusOne;                             // number of view minus one
   UInt		*m_auiViewOrder;                                  // i : view object index, a[i] : view object id
   UInt		*m_auiNumAnchorRefsL0;                            // i : view object index, a[i] : number of anchor view objects at L0
@@ -175,6 +177,7 @@ public:
 
   //===== Multi View Coding ====
   Void      setMVC                          ( Bool   b )     { m_bMVC = b; }
+  Void      setCurrentViewID                ( UInt   u )     { m_uiCurrentViewID = u; }
   Void      setNumViewsMinusOne             ( UInt   u )     { m_uiNumViewsMinusOne = u; }
   Void      setViewOrder                    ( UInt*  p )     { m_auiViewOrder = p; }
   Void      setNumAnchorRefsL0              ( UInt*  p )     { m_auiNumAnchorRefsL0 = p; }
@@ -187,6 +190,7 @@ public:
   Void      setNonAnchorRefL1               ( UInt** pp)     { m_aauiNonAnchorRefL1 = pp; }
 
   Bool      getMVC                          ()               { return m_bMVC; }
+  UInt      getCurrentViewID                ()               { return m_uiCurrentViewID; }
   UInt      getNumViewsMinusOne             ()               { return m_uiNumViewsMinusOne; }
   UInt*     getViewOrder                    ()               { return m_auiViewOrder; }
   UInt*     getNumAnchorRefsL0              ()               { return m_auiNumAnchorRefsL0; }
@@ -336,10 +340,6 @@ private:
 #if MS_NO_BACK_PRED_IN_B0
   Bool        m_bNoBackPredFlag;
 #endif
-
-  // mvc
-  Bool        m_bMVC;
-  Bool        m_bAnchor;
   
 public:
   TComSlice();
@@ -391,6 +391,7 @@ public:
   Void      setDepth            ( Int iDepth )                  { m_iDepth            = iDepth; }
   
   Void      setRefPicList       ( TComList<TComPic*>& rcListPic );
+  Void      setInterviewRefPicList( TComMultiView* pcMultiView, UInt uiPOCCurr, RefPicList e, Bool bAnchor );
   Void      setRefPOCList       ();
   Void      setColDir           ( UInt uiDir ) { m_uiColDir = uiDir; }
   
@@ -422,11 +423,6 @@ public:
   Bool getNoBackPredFlag() { return m_bNoBackPredFlag; }
   Void setNoBackPredFlag( Bool b ) { m_bNoBackPredFlag = b; }
 #endif
-
-  Void setMVC( Bool bMVC )           { m_bMVC = bMVC; }
-  Void setAnchor( Bool bAnchor )     { m_bAnchor = bAnchor; }
-  Bool getMVC( Void )                { return m_bMVC; }
-  Bool getAnchor( Void )             { return m_bAnchor; }
   
 protected:
   TComPic*  xGetRefPic  (TComList<TComPic*>& rcListPic,
