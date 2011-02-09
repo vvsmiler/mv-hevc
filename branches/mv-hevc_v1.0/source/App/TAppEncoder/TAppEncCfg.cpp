@@ -47,7 +47,8 @@
 using namespace std;
 namespace po = df::program_options_lite;
 
-// [KSI] 기존의 설정과 형태가 다른 MVC용 설정을 위해 추가한 유틸리티.
+Bool confirmPara(Bool bflag, const char* message);
+
 //{ MVC
 class OptionMVC;
 struct OptionsMVC: public po::Options
@@ -104,205 +105,287 @@ OptionMVC OptionsMVC::addOptionsMVC()
 	return OptionMVC(*this);
 }
 
-void procOptionsMVC(OptionFuncMVC& opt, const std::string& val)
+DECL_HANDLER(NumViewsMinusOne)
 {
-	TAppEncCfg& p = opt.parent.AppEncCfg;
-	if ( opt.opt_string == "NumViewsMinusOne" )
+	do 
 	{
-		// TODO : 나중에 안정성 체크 해야한다.
-		p.m_bMVC					= true;
-		p.m_uiNumViewsMinusOne		= atoi(val.c_str());
-		p.m_auiViewOrder			= new UInt[p.m_uiNumViewsMinusOne+1];
-		p.m_auiNumAnchorRefsL0		= new UInt[p.m_uiNumViewsMinusOne+1];
-		p.m_auiNumAnchorRefsL1		= new UInt[p.m_uiNumViewsMinusOne+1];
-		p.m_aauiAnchorRefL0			= new UInt*[p.m_uiNumViewsMinusOne+1];
-		p.m_aauiAnchorRefL1			= new UInt*[p.m_uiNumViewsMinusOne+1];
-		p.m_auiNumNonAnchorRefsL0	= new UInt[p.m_uiNumViewsMinusOne+1];
-		p.m_auiNumNonAnchorRefsL1	= new UInt[p.m_uiNumViewsMinusOne+1];
-		p.m_aauiNonAnchorRefL0		= new UInt*[p.m_uiNumViewsMinusOne+1];
-		p.m_aauiNonAnchorRefL1		= new UInt*[p.m_uiNumViewsMinusOne+1];
+		// check sanity
+		if ( r.m_bMVC == true ) break;
+		if ( r.m_uiNumViewsMinusOne != (UInt)-1 ) break;
 
-		for ( UInt i = 0;i <= p.m_uiNumViewsMinusOne; i++ )
+		// setup variables
+		r.m_bMVC					= true;
+		r.m_uiNumViewsMinusOne		= atoi(val.c_str());
+		r.m_auiViewOrder			= new UInt[r.m_uiNumViewsMinusOne+1];
+		r.m_auiNumAnchorRefsL0		= new UInt[r.m_uiNumViewsMinusOne+1];
+		r.m_auiNumAnchorRefsL1		= new UInt[r.m_uiNumViewsMinusOne+1];
+		r.m_aauiAnchorRefL0			= new UInt*[r.m_uiNumViewsMinusOne+1];
+		r.m_aauiAnchorRefL1			= new UInt*[r.m_uiNumViewsMinusOne+1];
+		r.m_auiNumNonAnchorRefsL0	= new UInt[r.m_uiNumViewsMinusOne+1];
+		r.m_auiNumNonAnchorRefsL1	= new UInt[r.m_uiNumViewsMinusOne+1];
+		r.m_aauiNonAnchorRefL0		= new UInt*[r.m_uiNumViewsMinusOne+1];
+		r.m_aauiNonAnchorRefL1		= new UInt*[r.m_uiNumViewsMinusOne+1];
+
+		for ( UInt i = 0;i <= r.m_uiNumViewsMinusOne; i++ )
 		{
-			p.m_auiViewOrder[i]=0;
-			p.m_auiNumAnchorRefsL0[i]=0;
-			p.m_auiNumAnchorRefsL1[i]=0;
-			p.m_aauiAnchorRefL0[i]=NULL;
-			p.m_aauiAnchorRefL1[i]=NULL;
-			p.m_auiNumNonAnchorRefsL0[i]=0;
-			p.m_auiNumNonAnchorRefsL1[i]=0;
-			p.m_aauiNonAnchorRefL0[i]=NULL;
-			p.m_aauiNonAnchorRefL1[i]=NULL;
+			r.m_auiViewOrder[i]=0;
+			r.m_auiNumAnchorRefsL0[i]=0;
+			r.m_auiNumAnchorRefsL1[i]=0;
+			r.m_aauiAnchorRefL0[i]=NULL;
+			r.m_aauiAnchorRefL1[i]=NULL;
+			r.m_auiNumNonAnchorRefsL0[i]=0;
+			r.m_auiNumNonAnchorRefsL1[i]=0;
+			r.m_aauiNonAnchorRefL0[i]=NULL;
+			r.m_aauiNonAnchorRefL1[i]=NULL;
 		}
-	}
 
-	if ( opt.opt_string == "ViewOrder" )
+		return true;
+	} while (0);
+	return false;
+}
+
+DECL_HANDLER(ViewOrder)
+{
+	do 
 	{
-		char ch[400];
+		// check sanity
+		if ( r.m_bMVC == false ) break;
+		if ( r.m_uiNumViewsMinusOne == (UInt)-1 ) break;
+
+		// setup variables
 		char *pch;
 		UInt count = 0;
-
-		memcpy(ch, val.c_str(), val.size());
-		ch[val.size()] = '\0';
-
-		pch = strtok(ch, "-");  
-
-		while(pch != NULL)
+		pch = strtok(const_cast<char*>(val.c_str()), "-");  
+		while( (pch != NULL) && (count <= r.m_uiNumViewsMinusOne) )
 		{
-			p.m_auiViewOrder[count++] = atoi(pch);     
+			r.m_auiViewOrder[count++] = atoi(pch);     
 			pch = strtok(NULL, "-");  
 		}
-	}
+		return true;
+	} while (0);
+	return false;
+}
 
-	if ( opt.opt_string == "View_ID" )
+DECL_HANDLER(View_ID)
+{
+	do 
 	{
-		p.m_uiProcessingViewID = atoi(val.c_str());
-	}
-
-	if ( opt.opt_string == "Fwd_NumAnchorRefs" )
-	{
-		// TODO : 나중에 안정성 체크 해야한다.
 		UInt i;
-		for ( i = 0; i <= p.m_uiNumViewsMinusOne; i++ )
-			if ( p.m_uiProcessingViewID == p.m_auiViewOrder[i]) break;
-		p.m_auiNumAnchorRefsL0[i] = atoi(val.c_str());
-		if ( p.m_auiNumAnchorRefsL0[i] != 0 )
-			p.m_aauiAnchorRefL0[i] = new UInt[p.m_auiNumAnchorRefsL0[i]];
-	}
+		UInt uiView_ID = atoi(val.c_str());
+		// check sanity
+		if ( r.m_bMVC == false ) break;
+		if ( r.m_uiNumViewsMinusOne == (UInt)-1 ) break;
+		for ( i = 0; i <= r.m_uiNumViewsMinusOne; i++ )
+			if ( r.m_auiViewOrder[i] == uiView_ID ) break;
+		if ( i > r.m_uiNumViewsMinusOne ) break;
 
-	if ( opt.opt_string == "Bwd_NumAnchorRefs" )
+		// setup variables
+		r.m_uiProcessingViewID = uiView_ID;
+		return true;
+	} while (0);
+	return false;
+}
+
+#define NUM_REF_PREFIX()											\
+	UInt i;															\
+	UInt uiNumRef = atoi(val.c_str());								\
+	if ( r.m_bMVC == false ) break;									\
+	if ( r.m_uiNumViewsMinusOne == (UInt)-1 ) break;				\
+	if ( uiNumRef > (r.m_uiNumViewsMinusOne+1) ) break;				\
+	for ( i = 0; i <= r.m_uiNumViewsMinusOne; i++ )					\
+		if ( r.m_uiProcessingViewID == r.m_auiViewOrder[i]) break;	\
+	if ( i > r.m_uiNumViewsMinusOne ) break;
+
+DECL_HANDLER(Fwd_NumAnchorRefs)
+{
+	do 
 	{
-		// TODO : 나중에 안정성 체크 해야한다.
-		UInt i;
-		for ( i = 0; i <= p.m_uiNumViewsMinusOne; i++ )
-			if ( p.m_uiProcessingViewID == p.m_auiViewOrder[i]) break;
-		p.m_auiNumAnchorRefsL1[i] = atoi(val.c_str());
-		if ( p.m_auiNumAnchorRefsL1[i] != 0 )
-			p.m_aauiAnchorRefL1[i] = new UInt[p.m_auiNumAnchorRefsL1[i]];
-	}
+		// check sanity
+		NUM_REF_PREFIX()
+		if ( r.m_auiNumAnchorRefsL0 == NULL ) break;
+		
 
-	if ( opt.opt_string == "Fwd_NumNonAnchorRefs" )
+		// setup variables
+		r.m_auiNumAnchorRefsL0[i] = uiNumRef;
+		if ( r.m_auiNumAnchorRefsL0[i] != 0 )
+			r.m_aauiAnchorRefL0[i] = new UInt[r.m_auiNumAnchorRefsL0[i]];
+		return true;
+	} while (0);
+	return false;
+}
+
+DECL_HANDLER(Bwd_NumAnchorRefs)
+{
+	do 
 	{
-		// TODO : 나중에 안정성 체크 해야한다.
-		UInt i;
-		for ( i = 0; i <= p.m_uiNumViewsMinusOne; i++ )
-			if ( p.m_uiProcessingViewID == p.m_auiViewOrder[i]) break;
-		p.m_auiNumNonAnchorRefsL0[i] = atoi(val.c_str());
-		if ( p.m_auiNumNonAnchorRefsL0[i] != 0 )
-			p.m_aauiNonAnchorRefL0[i] = new UInt[p.m_auiNumNonAnchorRefsL0[i]];
-	}
+		// check sanity
+		NUM_REF_PREFIX()
+		if ( r.m_auiNumAnchorRefsL1 == NULL ) break;
 
-	if ( opt.opt_string == "Bwd_NumNonAnchorRefs" )
+		// setup variables
+		r.m_auiNumAnchorRefsL1[i] = uiNumRef;
+		if ( r.m_auiNumAnchorRefsL1[i] != 0 )
+			r.m_aauiAnchorRefL1[i] = new UInt[r.m_auiNumAnchorRefsL1[i]];
+		return true;
+	} while (0);
+	return false;
+}
+
+DECL_HANDLER(Fwd_NumNonAnchorRefs)
+{
+	do 
 	{
-		// TODO : 나중에 안정성 체크 해야한다.
-		UInt i;
-		for ( i = 0; i <= p.m_uiNumViewsMinusOne; i++ )
-			if ( p.m_uiProcessingViewID == p.m_auiViewOrder[i]) break;
-		p.m_auiNumNonAnchorRefsL1[i] = atoi(val.c_str());
-		if ( p.m_auiNumNonAnchorRefsL1[i] != 0 )
-			p.m_aauiNonAnchorRefL1[i] = new UInt[p.m_auiNumNonAnchorRefsL1[i]];
-	}
+		// check sanity
+		NUM_REF_PREFIX()
+		if ( r.m_auiNumNonAnchorRefsL0 == NULL ) break;
 
-	if ( opt.opt_string == "Fwd_AnchorRefs" )
+		// setup variables
+		r.m_auiNumNonAnchorRefsL0[i] = uiNumRef;
+		if ( r.m_auiNumNonAnchorRefsL0[i] != 0 )
+			r.m_aauiNonAnchorRefL0[i] = new UInt[r.m_auiNumNonAnchorRefsL0[i]];
+		return true;
+	} while (0);
+	return false;
+}
+
+DECL_HANDLER(Bwd_NumNonAnchorRefs)
+{
+	do 
 	{
-		// TODO : 나중에 안정성 체크 해야한다.
-		char ch[10];
-		char *pch;
-		UInt ref_idx;
-		UInt view_id;
+		// check sanity
+		NUM_REF_PREFIX()
+		if ( r.m_auiNumNonAnchorRefsL1 == NULL ) break;
 
-		UInt i;
-		for ( i = 0; i <= p.m_uiNumViewsMinusOne; i++ )
-			if ( p.m_uiProcessingViewID == p.m_auiViewOrder[i]) break;
+		// setup variables
+		r.m_auiNumNonAnchorRefsL1[i] = uiNumRef;
+		if ( r.m_auiNumNonAnchorRefsL1[i] != 0 )
+			r.m_aauiNonAnchorRefL1[i] = new UInt[r.m_auiNumNonAnchorRefsL1[i]];
+		return true;
+	} while (0);
+	return false;
+}
 
-		if ( p.m_auiNumAnchorRefsL0[i] != 0 )
-		{
-			memcpy(ch, val.c_str(), val.size());
-			ch[val.size()] = '\0';
-			pch = strtok(ch, " ");
-			ref_idx = atoi(pch);
-			pch = strtok(NULL, " ");
-			view_id = atoi(pch);
-			p.m_aauiAnchorRefL0[i][ref_idx] = view_id;
-		}
-	}
+#undef NUM_REF_PREFIX
 
-	if ( opt.opt_string == "Bwd_AnchorRefs" )
+#define REF_PREFIX()												\
+	UInt i,j;														\
+	char *pch;														\
+	UInt ref_idx;													\
+	UInt view_id;													\
+																	\
+	pch = strtok(const_cast<char*>(val.c_str()), " ");				\
+	if ( pch == NULL ) break;										\
+	ref_idx = atoi(pch);											\
+																	\
+	pch = strtok(NULL, " ");										\
+	if ( pch == NULL ) break;										\
+	view_id = atoi(pch);											\
+																	\
+	if ( r.m_bMVC == false ) break;									\
+	if ( r.m_uiNumViewsMinusOne == (UInt)-1 ) break;				\
+	for ( i = 0; i <= r.m_uiNumViewsMinusOne; i++ )					\
+		if ( r.m_uiProcessingViewID == r.m_auiViewOrder[i]) break;	\
+	if ( i > r.m_uiNumViewsMinusOne ) break;						\
+	for ( j = 0; j <= r.m_uiNumViewsMinusOne; j++ )					\
+		if ( view_id == r.m_auiViewOrder[j]) break;					\
+	if ( j > r.m_uiNumViewsMinusOne ) break;
+
+DECL_HANDLER(Fwd_AnchorRefs)
+{
+	do 
 	{
-		// TODO : 나중에 안정성 체크 해야한다.
-		char ch[10];
-		char *pch;
-		UInt ref_idx;
-		UInt view_id;
+		// check sanity
+		REF_PREFIX()
+		if ( r.m_auiNumAnchorRefsL0 == NULL ) break;
+		if ( ref_idx >= r.m_auiNumAnchorRefsL0[i] ) break;
+		if ( r.m_aauiAnchorRefL0 == NULL ) break;
 
-		UInt i;
-		for ( i = 0; i <= p.m_uiNumViewsMinusOne; i++ )
-			if ( p.m_uiProcessingViewID == p.m_auiViewOrder[i]) break;
+		// setup variables
+		r.m_aauiAnchorRefL0[i][ref_idx] = view_id;
+		
+		return true;
+	} while (0);
+	return false;
+}
 
-		if ( p.m_auiNumAnchorRefsL1[i] != 0 )
-		{
-			memcpy(ch, val.c_str(), val.size());
-			ch[val.size()] = '\0';
-			pch = strtok(ch, " ");
-			ref_idx = atoi(pch);
-			pch = strtok(NULL, " ");
-			view_id = atoi(pch);
-			p.m_aauiAnchorRefL1[i][ref_idx] = view_id;
-		}
-	}
-
-	if ( opt.opt_string == "Fwd_NonAnchorRefs" )
+DECL_HANDLER(Bwd_AnchorRefs)
+{
+	do 
 	{
-		// TODO : 나중에 안정성 체크 해야한다.
-		char ch[10];
-		char *pch;
-		UInt ref_idx;
-		UInt view_id;
+		// check sanity
+		REF_PREFIX()
+			if ( r.m_auiNumAnchorRefsL1 == NULL ) break;
+		if ( ref_idx >= r.m_auiNumAnchorRefsL1[i] ) break;
+		if ( r.m_aauiAnchorRefL1 == NULL ) break;
 
-		UInt i;
-		for ( i = 0; i <= p.m_uiNumViewsMinusOne; i++ )
-			if ( p.m_uiProcessingViewID == p.m_auiViewOrder[i]) break;
+		// setup variables
+		r.m_aauiAnchorRefL1[i][ref_idx] = view_id;
 
-		if ( p.m_auiNumNonAnchorRefsL0[i] != 0 )
-		{
-			memcpy(ch, val.c_str(), val.size());
-			ch[val.size()] = '\0';
-			pch = strtok(ch, " ");
-			ref_idx = atoi(pch);
-			pch = strtok(NULL, " ");
-			view_id = atoi(pch);
-			p.m_aauiNonAnchorRefL0[i][ref_idx] = view_id;
-		}
-	}
+		return true;
+	} while (0);
+	return false;
+}
 
-	if ( opt.opt_string == "Bwd_NonAnchorRefs" )
+DECL_HANDLER(Fwd_NonAnchorRefs)
+{
+	do 
 	{
-		// TODO : 나중에 안정성 체크 해야한다.
-		char ch[10];
-		char *pch;
-		UInt ref_idx;
-		UInt view_id;
+		// check sanity
+		REF_PREFIX()
+			if ( r.m_auiNumNonAnchorRefsL0 == NULL ) break;
+		if ( ref_idx >= r.m_auiNumNonAnchorRefsL0[i] ) break;
+		if ( r.m_aauiNonAnchorRefL0 == NULL ) break;
 
-		UInt i;
-		for ( i = 0; i <= p.m_uiNumViewsMinusOne; i++ )
-			if ( p.m_uiProcessingViewID == p.m_auiViewOrder[i]) break;
+		// setup variables
+		r.m_aauiNonAnchorRefL0[i][ref_idx] = view_id;
 
-		if ( p.m_auiNumNonAnchorRefsL1[i] != 0 )
-		{
-			memcpy(ch, val.c_str(), val.size());
-			ch[val.size()] = '\0';
-			pch = strtok(ch, " ");
-			ref_idx = atoi(pch);
-			pch = strtok(NULL, " ");
-			view_id = atoi(pch);
-			p.m_aauiNonAnchorRefL1[i][ref_idx] = view_id;
-		}
-	}
+		return true;
+	} while (0);
+	return false;
+}
+
+DECL_HANDLER(Bwd_NonAnchorRefs)
+{
+	do 
+	{
+		// check sanity
+		REF_PREFIX()
+			if ( r.m_auiNumNonAnchorRefsL1 == NULL ) break;
+		if ( ref_idx >= r.m_auiNumNonAnchorRefsL1[i] ) break;
+		if ( r.m_aauiNonAnchorRefL1 == NULL ) break;
+
+		// setup variables
+		r.m_aauiNonAnchorRefL1[i][ref_idx] = view_id;
+
+		return true;
+	} while (0);
+	return false;
+}
+
+#undef REF_PREFIX
+
+void procOptionsMVC(OptionFuncMVC& opt, const std::string& val)
+{
+	Bool ret = false;
+	TAppEncCfg& p = opt.parent.AppEncCfg;
+#define CALL_HANDLER(NAME, MESSAGE)	ret = confirmPara(handle##NAME(p, val), MESSAGE)
+
+	if ( opt.opt_string == "NumViewsMinusOne" )		CALL_HANDLER(NumViewsMinusOne,		"Invalid NumViewsMinusOne");
+	if ( opt.opt_string == "ViewOrder" )			CALL_HANDLER(ViewOrder,				"Invalid ViewOrder");
+	if ( opt.opt_string == "View_ID" )				CALL_HANDLER(View_ID,				"Invalid View_ID");
+	if ( opt.opt_string == "Fwd_NumAnchorRefs" )	CALL_HANDLER(Fwd_NumAnchorRefs,		"Invalid Fwd_NumAnchorRefs");
+	if ( opt.opt_string == "Bwd_NumAnchorRefs" )	CALL_HANDLER(Bwd_NumAnchorRefs,		"Invalid Bwd_NumAnchorRefs");
+	if ( opt.opt_string == "Fwd_NumNonAnchorRefs" )	CALL_HANDLER(Fwd_NumNonAnchorRefs,	"Invalid Fwd_NumNonAnchorRefs");
+	if ( opt.opt_string == "Bwd_NumNonAnchorRefs" )	CALL_HANDLER(Bwd_NumNonAnchorRefs,	"Invalid Bwd_NumNonAnchorRefs");
+	if ( opt.opt_string == "Fwd_AnchorRefs" )		CALL_HANDLER(Fwd_AnchorRefs,		"Invalid Fwd_AnchorRefs");
+	if ( opt.opt_string == "Bwd_AnchorRefs" )		CALL_HANDLER(Bwd_AnchorRefs,		"Invalid Bwd_AnchorRefs");
+	if ( opt.opt_string == "Fwd_NonAnchorRefs" )	CALL_HANDLER(Fwd_NonAnchorRefs,		"Invalid Fwd_NonAnchorRefs");
+	if ( opt.opt_string == "Bwd_NonAnchorRefs" )	CALL_HANDLER(Bwd_NonAnchorRefs,		"Invalid Bwd_NonAnchorRefs");
+
+#undef CALL_HANDLER
+	if ( ret == false ) exit(EXIT_FAILURE);
 }
 //} ~MVC
-
-
-
 
 /* configuration helper funcs */
 void doOldStyleCmdlineOn(po::Options& opts, const std::string& arg);
@@ -373,7 +456,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   string cfg_BitstreamFile;
   string cfg_ReconFile;
   string cfg_dQPFile;
-  //po::Options opts;
   OptionsMVC opts(*this);
   opts.addOptions()
   ("help", do_help, false, "this help text")
@@ -607,8 +689,6 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 // ====================================================================================================================
 // Private member functions
 // ====================================================================================================================
-
-Bool confirmPara(Bool bflag, const char* message);
 
 Void TAppEncCfg::xCheckParameter()
 {
