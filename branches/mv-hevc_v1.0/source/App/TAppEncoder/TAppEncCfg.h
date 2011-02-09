@@ -38,6 +38,7 @@
 
 #include "../../Lib/TLibCommon/CommonDef.h"
 
+//{ [KSI] - MVC
 struct OptionFuncMVC;
 class TAppEncCfg;
 #define DECL_HANDLER(NAME)	Bool handle##NAME(TAppEncCfg& r, const std::string& val)
@@ -53,6 +54,7 @@ DECL_HANDLER(Bwd_AnchorRefs);
 DECL_HANDLER(Fwd_NonAnchorRefs);
 DECL_HANDLER(Bwd_NonAnchorRefs);
 void procOptionsMVC(OptionFuncMVC& opt, const std::string& val);
+//} [KSI] - ~MVC
 
 // ====================================================================================================================
 // Class definition
@@ -61,6 +63,7 @@ void procOptionsMVC(OptionFuncMVC& opt, const std::string& val);
 /// encoder configuration class
 class TAppEncCfg
 {
+	//{ [KSI] - MVC
 	friend DECL_HANDLER(NumViewsMinusOne);
 	friend DECL_HANDLER(ViewOrder);
 	friend DECL_HANDLER(View_ID);
@@ -73,6 +76,7 @@ class TAppEncCfg
 	friend DECL_HANDLER(Fwd_NonAnchorRefs);
 	friend DECL_HANDLER(Bwd_NonAnchorRefs);
 	friend void procOptionsMVC(OptionFuncMVC& opt, const std::string& val);
+	//} [KSI] - ~MVC
 protected:
   // file I/O
   char*     m_pchInputFile;                                   ///< source file name
@@ -163,7 +167,7 @@ protected:
   Bool m_useRoundingControlBipred;
 #endif
 
-  // for multiview
+  //{ [KSI] - MVC
   char*     m_pchFileNamePrefix;                              ///< prefix of multiview file name
   Bool		m_bMVC;                                           ///< flag for using MVC
   UInt		m_uiCurrentViewID;                                ///< current encoding view id
@@ -178,6 +182,7 @@ protected:
   UInt		*m_auiNumNonAnchorRefsL1;                         ///< i : view object index, a[i] : number of non-anchor view objects at L1
   UInt		**m_aauiNonAnchorRefL0;                           ///< i : view object index, j : reference order, a[i][j] : non-anchor view object id at L0
   UInt		**m_aauiNonAnchorRefL1;                           ///< i : view object index, j : reference order, a[i][j] : non-anchor view object id at L1
+  //} [KSI] - ~MVC
   
   // internal member functions
   Void  xSetGlobal      ();                                   ///< set global variables

@@ -49,7 +49,7 @@ namespace po = df::program_options_lite;
 
 Bool confirmPara(Bool bflag, const char* message);
 
-//{ MVC
+//{ [KSI] - MVC
 class OptionMVC;
 struct OptionsMVC: public po::Options
 {
@@ -314,7 +314,7 @@ DECL_HANDLER(Bwd_AnchorRefs)
 	{
 		// check sanity
 		REF_PREFIX()
-			if ( r.m_auiNumAnchorRefsL1 == NULL ) break;
+		if ( r.m_auiNumAnchorRefsL1 == NULL ) break;
 		if ( ref_idx >= r.m_auiNumAnchorRefsL1[i] ) break;
 		if ( r.m_aauiAnchorRefL1 == NULL ) break;
 
@@ -332,7 +332,7 @@ DECL_HANDLER(Fwd_NonAnchorRefs)
 	{
 		// check sanity
 		REF_PREFIX()
-			if ( r.m_auiNumNonAnchorRefsL0 == NULL ) break;
+		if ( r.m_auiNumNonAnchorRefsL0 == NULL ) break;
 		if ( ref_idx >= r.m_auiNumNonAnchorRefsL0[i] ) break;
 		if ( r.m_aauiNonAnchorRefL0 == NULL ) break;
 
@@ -350,7 +350,7 @@ DECL_HANDLER(Bwd_NonAnchorRefs)
 	{
 		// check sanity
 		REF_PREFIX()
-			if ( r.m_auiNumNonAnchorRefsL1 == NULL ) break;
+		if ( r.m_auiNumNonAnchorRefsL1 == NULL ) break;
 		if ( ref_idx >= r.m_auiNumNonAnchorRefsL1[i] ) break;
 		if ( r.m_aauiNonAnchorRefL1 == NULL ) break;
 
@@ -368,7 +368,7 @@ void procOptionsMVC(OptionFuncMVC& opt, const std::string& val)
 {
 	Bool ret = false;
 	TAppEncCfg& p = opt.parent.AppEncCfg;
-#define CALL_HANDLER(NAME, MESSAGE)	ret = confirmPara(handle##NAME(p, val), MESSAGE)
+#define CALL_HANDLER(NAME, MESSAGE)	ret = confirmPara(!handle##NAME(p, val), MESSAGE)
 
 	if ( opt.opt_string == "NumViewsMinusOne" )		CALL_HANDLER(NumViewsMinusOne,		"Invalid NumViewsMinusOne");
 	if ( opt.opt_string == "ViewOrder" )			CALL_HANDLER(ViewOrder,				"Invalid ViewOrder");
@@ -383,9 +383,9 @@ void procOptionsMVC(OptionFuncMVC& opt, const std::string& val)
 	if ( opt.opt_string == "Bwd_NonAnchorRefs" )	CALL_HANDLER(Bwd_NonAnchorRefs,		"Invalid Bwd_NonAnchorRefs");
 
 #undef CALL_HANDLER
-	if ( ret == false ) exit(EXIT_FAILURE);
+	if ( ret ) exit(EXIT_FAILURE);
 }
-//} ~MVC
+//} [KSI] - ~MVC
 
 /* configuration helper funcs */
 void doOldStyleCmdlineOn(po::Options& opts, const std::string& arg);
@@ -419,7 +419,7 @@ TAppEncCfg::~TAppEncCfg()
 
 Void TAppEncCfg::create()
 {
-	//{ MVC
+	//{ [KSI] - MVC
 	m_bMVC						= false;
 	m_uiCurrentViewID			= -1;
 	m_uiProcessingViewID		= -1;
@@ -433,7 +433,7 @@ Void TAppEncCfg::create()
 	m_auiNumNonAnchorRefsL1		= NULL;
 	m_aauiNonAnchorRefL0		= NULL;
 	m_aauiNonAnchorRefL1		= NULL;
-	//} ~MVC
+	//} [KSI] - ~MVC
 }
 
 Void TAppEncCfg::destroy()
@@ -559,8 +559,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("0", doOldStyleCmdlineOff, "turn option <name> off")
   ;
 
-  // [KSI] MVC甫 困茄 可记甸 贸府.
-  //{ MVC
+  //{ [KSI] - MVC
   opts.addOptionsMVC()
   ("-curvid",				m_uiCurrentViewID, 0xFFFFFFFFu,	"current view id")
   ("NumViewsMinusOne",		procOptionsMVC,					"Number of view objects minus one")
@@ -574,7 +573,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
   ("Bwd_AnchorRefs",		procOptionsMVC,					"Index for list_1 and reference view id for anchor")
   ("Fwd_NonAnchorRefs",		procOptionsMVC,					"Index for list_0 and reference view id for non-anchor")
   ("Bwd_NonAnchorRefs",		procOptionsMVC,					"Index for list_1 and reference view id for non-anchor")
-  //} ~MVC
+  //} [KSI] - ~MVC
   ;
   
   po::setDefaults(opts);
@@ -592,6 +591,7 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
    * Set any derived parameters
    */
 
+  //{ [KSI] - MVC
   if ( m_bMVC )
   {
 	  char pos[10];
@@ -607,8 +607,13 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 	  cfg_ReconFile += ".yuv";
   }
 
-  if ( m_bMVC && !m_uiCurrentViewID )
+  UInt i;
+  for ( i = 0; i <= m_uiNumViewsMinusOne; i++ )
+	  if ( m_uiCurrentViewID == m_auiViewOrder[i]) break;
+
+  if ( m_bMVC && !i )
 	  m_bMVC = false;
+  //} [KSI] - ~MVC
 
   /* convert std::string to c string for compatability */
   m_pchInputFile = cfg_InputFile.empty() ? NULL : strdup(cfg_InputFile.c_str());
@@ -889,7 +894,7 @@ Void TAppEncCfg::xPrintParameter()
 
   printf("\n\n");
 
-  //{ MVC
+  //{ [KSI] - MVC
   printf( "MVC Enable                   : %s\n", m_bMVC ? "true" : "false" );
   printf( "Current View ID              : %d\n", m_uiCurrentViewID );
   printf( "NumViewsMinusOne             : %d\n", m_uiNumViewsMinusOne );
@@ -917,7 +922,7 @@ Void TAppEncCfg::xPrintParameter()
 	  for ( UInt j = 0; j < m_auiNumNonAnchorRefsL1[i]; j++ )
 		  printf( "      NonAnchorRefL1[%d][%d] - %d\n", i, j, m_aauiNonAnchorRefL1[i][j]);
   }
-  //} ~MVC
+  //} [KSI] - ~MVC
 
 
   printf("\n");
