@@ -39,6 +39,19 @@
 #include "../../Lib/TLibCommon/CommonDef.h"
 
 struct OptionFuncMVC;
+class TAppEncCfg;
+#define DECL_HANDLER(NAME)	Bool handle##NAME(TAppEncCfg& r, const std::string& val)
+DECL_HANDLER(NumViewsMinusOne);
+DECL_HANDLER(ViewOrder);
+DECL_HANDLER(View_ID);
+DECL_HANDLER(Fwd_NumAnchorRefs);
+DECL_HANDLER(Bwd_NumAnchorRefs);
+DECL_HANDLER(Fwd_NumNonAnchorRefs);
+DECL_HANDLER(Bwd_NumNonAnchorRefs);
+DECL_HANDLER(Fwd_AnchorRefs);
+DECL_HANDLER(Bwd_AnchorRefs);
+DECL_HANDLER(Fwd_NonAnchorRefs);
+DECL_HANDLER(Bwd_NonAnchorRefs);
 void procOptionsMVC(OptionFuncMVC& opt, const std::string& val);
 
 // ====================================================================================================================
@@ -48,6 +61,17 @@ void procOptionsMVC(OptionFuncMVC& opt, const std::string& val);
 /// encoder configuration class
 class TAppEncCfg
 {
+	friend DECL_HANDLER(NumViewsMinusOne);
+	friend DECL_HANDLER(ViewOrder);
+	friend DECL_HANDLER(View_ID);
+	friend DECL_HANDLER(Fwd_NumAnchorRefs);
+	friend DECL_HANDLER(Bwd_NumAnchorRefs);
+	friend DECL_HANDLER(Fwd_NumNonAnchorRefs);
+	friend DECL_HANDLER(Bwd_NumNonAnchorRefs);
+	friend DECL_HANDLER(Fwd_AnchorRefs);
+	friend DECL_HANDLER(Bwd_AnchorRefs);
+	friend DECL_HANDLER(Fwd_NonAnchorRefs);
+	friend DECL_HANDLER(Bwd_NonAnchorRefs);
 	friend void procOptionsMVC(OptionFuncMVC& opt, const std::string& val);
 protected:
   // file I/O
