@@ -88,7 +88,7 @@ private:
   
   Int m_iAMPAcc[MAX_CU_DEPTH];
 
-  //===== Multi View Coding ====
+  //{ [KSI] - MVC
   Bool		m_bMVC;                                           // flag for using MVC
   UInt		m_uiCurrentViewID;                                // current encoding view id
   UInt		m_uiNumViewsMinusOne;                             // number of view minus one
@@ -101,6 +101,7 @@ private:
   UInt		*m_auiNumNonAnchorRefsL1;                         // i : view object index, a[i] : number of non-anchor view objects at L1
   UInt		**m_aauiNonAnchorRefL0;                           // i : view object index, j : reference order, a[i][j] : non-anchor view object id at L0
   UInt		**m_aauiNonAnchorRefL1;                           // i : view object index, j : reference order, a[i][j] : non-anchor view object id at L1
+  //} [KSI] - ~MVC
   
 public:
   TComSPS();
@@ -175,7 +176,7 @@ public:
   UInt      getBitIncrement ()         { return m_uiBitIncrement; }
   Void      setBitIncrement ( UInt u ) { m_uiBitIncrement = u;    }
 
-  //===== Multi View Coding ====
+  //{ [KSI] - MVC
   Void      setMVC                          ( Bool   b )     { m_bMVC = b; }
   Void      setCurrentViewID                ( UInt   u )     { m_uiCurrentViewID = u; }
   Void      setNumViewsMinusOne             ( UInt   u )     { m_uiNumViewsMinusOne = u; }
@@ -284,6 +285,7 @@ public:
 	  assert(col < m_auiNumNonAnchorRefsL1[row]);
 	  m_aauiNonAnchorRefL1[row][col] = val;
   }
+  //} [KSI] - ~MVC
 };
 
 /// PPS class

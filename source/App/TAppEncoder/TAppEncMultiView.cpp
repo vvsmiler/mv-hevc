@@ -1,5 +1,8 @@
 #include <string>
 #include "TAppEncMultiView.h"
+#include "../../Lib/TLibCommon/TComPicYuv.h"
+#include "../../Lib/TLibEncoder/TEncCfg.h"
+#include "../../Lib/TLibVideoIO/TVideoIOYuv.h"
 
 TAppEncMultiView::TAppEncMultiView( Void )
 :m_pcEncCfg(NULL)
@@ -20,86 +23,56 @@ Void TAppEncMultiView::openMultiView( char* pchFileNamePrefix, TEncCfg* pcEncCfg
 		if ( m_pcEncCfg->getViewOrder()[uiCurViewIndex] == m_pcEncCfg->getCurrentViewID() )
 			break;
 	}
-	
-	if ( uiCurViewIndex != 0 ) // [KSI] uiCurViewIndex == 0 이면, BaseView 이므로 Inter-view prediction하지 않는다.
+
+#define OPEN_FILE(TYPE, LIST)																	\
+	for ( UInt i = 0; i < m_pcEncCfg->getNum##TYPE##Refs##LIST##()[uiCurViewIndex]; i++ )		\
+	{																							\
+		std::string filename;																	\
+		filename += pchFileNamePrefix;															\
+		filename += '_';																		\
+		filename += _itoa(m_pcEncCfg->get##TYPE##Ref##LIST##()[uiCurViewIndex][i], pos, 10);	\
+		filename += ".yuv";																		\
+		TVideoIOYuv* pFile = new TVideoIOYuv;													\
+		pFile->open( const_cast<char*>(filename.c_str()), false );								\
+		m_cList##TYPE##ViewFiles.pushBack( pFile );												\
+	}
+
+	// [KSI] uiCurViewIndex == 0 이면, BaseView 이므로 Inter-view prediction하지 않는다.
+	if ( uiCurViewIndex != 0 )
 	{
 		char pos[10];
 		if ( eDirection == FWD )
 		{
-			for ( UInt i = 0; i < m_pcEncCfg->getNumAnchorRefsL0()[uiCurViewIndex]; i++ )
-			{
-				std::string filename;
-				filename += pchFileNamePrefix;
-				filename += '_';
-				filename += _itoa(m_pcEncCfg->getAnchorRefL0()[uiCurViewIndex][i], pos, 10);
-				filename += ".yuv";
-				TVideoIOYuv* pFile = new TVideoIOYuv;
-				pFile->open( const_cast<char*>(filename.c_str()), false );
-				m_cListAnchorViewFiles.pushBack( pFile );
-			}
-
-			for ( UInt i = 0; i < m_pcEncCfg->getNumNonAnchorRefsL0()[uiCurViewIndex]; i++ )
-			{
-				std::string filename;
-				filename += pchFileNamePrefix;
-				filename += '_';
-				filename += _itoa(m_pcEncCfg->getNonAnchorRefL0()[uiCurViewIndex][i], pos, 10);
-				filename += ".yuv";
-				TVideoIOYuv* pFile = new TVideoIOYuv;
-				pFile->open( const_cast<char*>(filename.c_str()), false );
-				m_cListNonAnchorViewFiles.pushBack( pFile );
-			}
+			OPEN_FILE(Anchor, L0)
+			OPEN_FILE(NonAnchor, L0)
 		}
 		else if ( eDirection == BWD )
 		{
-			for ( UInt i = 0; i < m_pcEncCfg->getNumAnchorRefsL1()[uiCurViewIndex]; i++ )
-			{
-				std::string filename;
-				filename += pchFileNamePrefix;
-				filename += '_';
-				filename += _itoa(m_pcEncCfg->getAnchorRefL1()[uiCurViewIndex][i], pos, 10);
-				filename += ".yuv";
-				TVideoIOYuv* pFile = new TVideoIOYuv;
-				pFile->open( const_cast<char*>(filename.c_str()), false );
-				m_cListAnchorViewFiles.pushBack( pFile );
-			}
-
-			for ( UInt i = 0; i < m_pcEncCfg->getNumNonAnchorRefsL1()[uiCurViewIndex]; i++ )
-			{
-				std::string filename;
-				filename += pchFileNamePrefix;
-				filename += '_';
-				filename += _itoa(m_pcEncCfg->getNonAnchorRefL1()[uiCurViewIndex][i], pos, 10);
-				filename += ".yuv";
-				TVideoIOYuv* pFile = new TVideoIOYuv;
-				pFile->open( const_cast<char*>(filename.c_str()), false );
-				m_cListNonAnchorViewFiles.pushBack( pFile );
-			}
+			OPEN_FILE(Anchor, L1)
+			OPEN_FILE(NonAnchor, L1)
 		}
 	}
+#undef OPEN_FILE
 }
 
 Void TAppEncMultiView::closeMultiView( Void )
 {
 	TComList<TVideoIOYuv*>::iterator iter;
 
-	iter = m_cListAnchorViewFiles.begin();
-	while( iter != m_cListAnchorViewFiles.end() )
-	{
-		(*iter)->close();
-		delete (*iter);
-		(*iter) = NULL;
-		iter++;
+#define CLOSE_FILE(LIST)							\
+	iter = m_cList##LIST##ViewFiles.begin();		\
+	while( iter != m_cList##LIST##ViewFiles.end() )	\
+	{												\
+		(*iter)->close();							\
+		delete (*iter);								\
+		(*iter) = NULL;								\
+		iter++;										\
 	}
 
-	iter = m_cListNonAnchorViewFiles.begin();
-	while( iter != m_cListNonAnchorViewFiles.end() )
-	{
-		(*iter)->close();
-		delete (*iter);
-		(*iter) = NULL;
-		iter++;
-	}
+	CLOSE_FILE(Anchor)
+	CLOSE_FILE(NonAnchor)
+
+#undef CLOSE_FILE
 }
 
 Void TAppEncMultiView::generateMultiViewList( TComList<TComPicYuv*>& rcListMultiView, Bool bAnchor )
@@ -116,7 +89,7 @@ Void TAppEncMultiView::generateMultiViewList( TComList<TComPicYuv*>& rcListMulti
 		aiPad[1] = m_pcEncCfg->getPad(1);
 		TComPicYuv* pcPic = new TComPicYuv;
 		pcPic->create( m_pcEncCfg->getSourceWidth(), m_pcEncCfg->getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
-		(*iter)->read( pcPic, aiPad	);
+		(*iter)->read( pcPic, aiPad	); // TODO : [KSI] read를 실패하는지 성공하는지 판단 할 방법이 없다.
 		if ( bAnchor ) rcListMultiView.pushBack(pcPic);
 		else           delete pcPic;
 		iter++;
@@ -130,7 +103,7 @@ Void TAppEncMultiView::generateMultiViewList( TComList<TComPicYuv*>& rcListMulti
 		aiPad[1] = m_pcEncCfg->getPad(1);
 		TComPicYuv* pcPic = new TComPicYuv;
 		pcPic->create( m_pcEncCfg->getSourceWidth(), m_pcEncCfg->getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
-		(*iter)->read( pcPic, aiPad	);
+		(*iter)->read( pcPic, aiPad	); // TODO : [KSI] read를 실패하는지 성공하는지 판단 할 방법이 없다.
 		if ( !bAnchor ) rcListMultiView.pushBack(pcPic);
 		else            delete pcPic;
 		iter++;

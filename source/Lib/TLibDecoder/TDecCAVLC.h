@@ -108,7 +108,16 @@ public:
   Void  parseAlfSvlc        ( Int&  riVal  );
   
   Void  parseSPS            ( TComSPS* pcSPS );
+  //{ [KSI] - MVC
+  Void  parseSubsetSPS_MVC  ( TComSPS* pcSPS );
+  //} [KSI] - ~MVC
   Void  parsePPS            ( TComPPS* pcPPS);
+  //{ [KSI] - MVC
+  Void  parsePrefix         ( TComSlice*& rpcSlice );
+  //} [KSI] - ~MVC
+  //{ [KSI] - MVC
+  Void  parseSliceExtensionHeader ( TComSlice*& rpcSlice );
+  //} [KSI] - ~MVC
   Void  parseSliceHeader    ( TComSlice*& rpcSlice );
   Void  parseTerminatingBit ( UInt& ruiBit );
   

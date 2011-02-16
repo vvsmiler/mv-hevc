@@ -121,7 +121,7 @@ protected:
   Bool m_useRoundingControlBipred;
 #endif
 
-  //===== Multi View Coding ====
+  //{ [KSI] - MVC
   Bool		m_bMVC;                                           // flag for using MVC
   UInt		m_uiCurrentViewID;                                // current encoding view id
   UInt		m_uiNumViewsMinusOne;                             // number of view minus one
@@ -134,6 +134,7 @@ protected:
   UInt		*m_auiNumNonAnchorRefsL1;                         // i : view object index, a[i] : number of non-anchor view objects at L1
   UInt		**m_aauiNonAnchorRefL0;                           // i : view object index, j : reference order, a[i][j] : non-anchor view object id at L0
   UInt		**m_aauiNonAnchorRefL1;                           // i : view object index, j : reference order, a[i][j] : non-anchor view object id at L1
+  //} [KSI] - ~MVC
 
 public:
   TEncCfg()          {}
@@ -271,7 +272,7 @@ public:
   Bool getUseRoundingControlBipred() { return m_useRoundingControlBipred; }
 #endif
 
-  //===== Multi View Coding ====
+  //{ [KSI] - MVC
   Void      setMVC                          ( Bool   b )     { m_bMVC = b; }
   Void      setCurrentViewID                ( UInt   u )     { m_uiCurrentViewID = u; }
   Void      setNumViewsMinusOne             ( UInt   u )     { m_uiNumViewsMinusOne = u; }
@@ -297,6 +298,7 @@ public:
   UInt*     getNumNonAnchorRefsL1           ()               { return m_auiNumNonAnchorRefsL1; }
   UInt**    getNonAnchorRefL0               ()               { return m_aauiNonAnchorRefL0; }
   UInt**    getNonAnchorRefL1               ()               { return m_aauiNonAnchorRefL1; }
+  //} [KSI] - ~MVC
 };
 
 #endif // !defined(AFX_TENCCFG_H__6B99B797_F4DA_4E46_8E78_7656339A6C41__INCLUDED_)

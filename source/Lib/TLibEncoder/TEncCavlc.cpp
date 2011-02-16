@@ -477,50 +477,226 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
   // Bit-depth information
   xWriteUvlc( pcSPS->getBitDepth() - 8 );
   xWriteUvlc( pcSPS->getBitIncrement() );
-
-  // [KSI] Multiview
-  //{
-  xWriteUvlc( pcSPS->getNumViewsMinusOne() );
-  for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
-  {
-	  xWriteUvlc( pcSPS->getViewOrder()[i] );
-  }
-
-  for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
-  {
-	  xWriteUvlc( pcSPS->getNumAnchorRefsL0()[i] );
-	  for ( UInt j = 0; j < pcSPS->getNumAnchorRefsL0()[i]; j++ )
-	  {
-		  xWriteUvlc( pcSPS->getAnchorRefL0()[i][j] );
-	  }
-	  xWriteUvlc( pcSPS->getNumAnchorRefsL1()[i] );
-	  for ( UInt j = 0; j < pcSPS->getNumAnchorRefsL1()[i]; j++ )
-	  {
-		  xWriteUvlc( pcSPS->getAnchorRefL1()[i][j] );
-	  }
-  }
-
-  for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
-  {
-	  xWriteUvlc( pcSPS->getNumNonAnchorRefsL0()[i] );
-	  for ( UInt j = 0; j < pcSPS->getNumNonAnchorRefsL0()[i]; j++ )
-	  {
-		  xWriteUvlc( pcSPS->getNonAnchorRefL0()[i][j] );
-	  }
-	  xWriteUvlc( pcSPS->getNumNonAnchorRefsL1()[i] );
-	  for ( UInt j = 0; j < pcSPS->getNumNonAnchorRefsL1()[i]; j++ )
-	  {
-		  xWriteUvlc( pcSPS->getNonAnchorRefL1()[i][j] );
-	  }
-  }
-  //}
 }
+
+//{ [KSI] - MVC
+Void TEncCavlc::codeSubsetSPS_MVC( TComSPS* pcSPS )
+{
+#if HHI_NAL_UNIT_SYNTAX
+	// uiFirstByte
+	xWriteCode( NAL_REF_IDC_PRIORITY_HIGHEST, 2);
+	xWriteCode( 0, 1);
+	xWriteCode( NAL_UNIT_SUBSET_SPS, 5);
+#endif
+	// Structure
+	xWriteUvlc  ( pcSPS->getWidth () );
+	xWriteUvlc  ( pcSPS->getHeight() );
+
+	xWriteUvlc  ( pcSPS->getPad (0) );
+	xWriteUvlc  ( pcSPS->getPad (1) );
+
+	assert( pcSPS->getMaxCUWidth() == pcSPS->getMaxCUHeight() );
+	xWriteUvlc  ( pcSPS->getMaxCUWidth()   );
+	xWriteUvlc  ( pcSPS->getMaxCUDepth()-g_uiAddCUDepth );
+
+	xWriteUvlc( pcSPS->getQuadtreeTULog2MinSize() - 2 );
+	xWriteUvlc( pcSPS->getQuadtreeTULog2MaxSize() - pcSPS->getQuadtreeTULog2MinSize() );
+	xWriteUvlc( pcSPS->getQuadtreeTUMaxDepthInter() - 1 );
+	xWriteUvlc( pcSPS->getQuadtreeTUMaxDepthIntra() - 1 );
+
+
+	// Tools
+	xWriteFlag  ( (pcSPS->getUseALF ()) ? 1 : 0 );
+	xWriteFlag  ( (pcSPS->getUseDQP ()) ? 1 : 0 );
+	xWriteFlag  ( (pcSPS->getUseLDC ()) ? 1 : 0 );
+#if HHI_MRG
+	xWriteFlag  ( (pcSPS->getUseMRG ()) ? 1 : 0 ); // SOPH:
+#endif
+
+#if HHI_RMP_SWITCH
+	xWriteFlag  ( (pcSPS->getUseRMP()) ? 1 : 0 );
+#endif
+
+	// write number of taps for DIF
+	xWriteUvlc  ( (pcSPS->getDIFTap ()>>1)-2 ); // 4, 6, 8, 10, 12
+
+	// AMVP mode for each depth
+	for (Int i = 0; i < pcSPS->getMaxCUDepth(); i++)
+	{
+		xWriteFlag( pcSPS->getAMVPMode(i) ? 1 : 0);
+	}
+
+	// Bit-depth information
+	xWriteUvlc( pcSPS->getBitDepth() - 8 );
+	xWriteUvlc( pcSPS->getBitIncrement() );
+
+	//{ [KSI] - MVC
+	xWriteFlag( 1 ); // MVC FLAG
+	xWriteUvlc( pcSPS->getNumViewsMinusOne() );
+	for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
+	{
+		xWriteUvlc( pcSPS->getViewOrder()[i] );
+	}
+
+	for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
+	{
+		xWriteUvlc( pcSPS->getNumAnchorRefsL0()[i] );
+		for ( UInt j = 0; j < pcSPS->getNumAnchorRefsL0()[i]; j++ )
+		{
+			xWriteUvlc( pcSPS->getAnchorRefL0()[i][j] );
+		}
+		xWriteUvlc( pcSPS->getNumAnchorRefsL1()[i] );
+		for ( UInt j = 0; j < pcSPS->getNumAnchorRefsL1()[i]; j++ )
+		{
+			xWriteUvlc( pcSPS->getAnchorRefL1()[i][j] );
+		}
+	}
+
+	for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
+	{
+		xWriteUvlc( pcSPS->getNumNonAnchorRefsL0()[i] );
+		for ( UInt j = 0; j < pcSPS->getNumNonAnchorRefsL0()[i]; j++ )
+		{
+			xWriteUvlc( pcSPS->getNonAnchorRefL0()[i][j] );
+		}
+		xWriteUvlc( pcSPS->getNumNonAnchorRefsL1()[i] );
+		for ( UInt j = 0; j < pcSPS->getNumNonAnchorRefsL1()[i]; j++ )
+		{
+			xWriteUvlc( pcSPS->getNonAnchorRefL1()[i][j] );
+		}
+	}
+	//} [KSI] - ~MVC
+}
+//} [KSI] - ~MVC
+
+//{ [KSI] - MVC
+Void TEncCavlc::codePrefix              ( TComSlice* pcSlice, TEncCfg* pcCfg )
+{
+#if HHI_NAL_UNIT_SYNTAX
+	// here someone can add an appropriated NalRefIdc type 
+	//{ [KSI] - MVC
+	if ( (pcSlice->getPOC() == 0)&&(pcSlice->getSliceType() == I_SLICE) ) // IDR
+		xWriteCode( NAL_REF_IDC_PRIORITY_HIGHEST, 2 );
+	else if ( pcSlice->getDepth() == 0 )
+		xWriteCode( NAL_REF_IDC_PRIORITY_HIGH, 2 );
+	else if ( (pcSlice->getDepth() > 0)&&(pcSlice->isReferenced()) )
+		xWriteCode( NAL_REF_IDC_PRIORITY_LOW, 2 );
+	else if ( (pcSlice->getDepth() > 0)&&(!pcSlice->isReferenced()) )
+		xWriteCode( NAL_REF_IDC_PRIORITY_LOWEST, 2 );
+	else
+		assert(false);
+	//} [KSI] - ~MVC
+	xWriteCode( 0, 1);
+	xWriteCode( NAL_UNIT_CODED_SLICE_PREFIX, 5);
+
+	xWriteFlag( 0 ); //svc_extension_flag
+	xWriteFlag( (UInt)(!( (pcSlice->getPOC() == 0)&&(pcSlice->getSliceType() == I_SLICE) )) );          //non_idr_flag    - u(1)
+	xWriteCode( (UInt)pcSlice->getDepth(), 6 );                                                         //priority_id     - u(6)
+	xWriteCode( (UInt)pcCfg->getCurrentViewID(), 10 );                                                  //view_id         - u(10)
+	xWriteCode( (UInt)pcSlice->getDepth(), 3 );                                                         //temporal_id     - u(3)
+	xWriteFlag( (UInt)(pcSlice->getPOC() == 0 || pcSlice->getPOC() % pcCfg->getIntraPeriod() == 0) );   //anchor_pic_flag - u(1)
+	xWriteFlag( (UInt)(true) );                                                                         //inter_view_flag - u(1)
+	xWriteFlag( (UInt)(true) );                                                                         //reserved_one_bit- u(1)
+#endif
+}
+//} [KSI] - ~MVC
+
+//{ [KSI] - MVC
+Void  TEncCavlc::codeSliceExtensionHeader( TComSlice* pcSlice, TEncCfg* pcCfg )
+{
+#if HHI_NAL_UNIT_SYNTAX
+	// here someone can add an appropriated NalRefIdc type 
+	//{ [KSI] - MVC
+	if ( (pcSlice->getPOC() == 0)&&(pcSlice->getSliceType() == I_SLICE) ) // IDR
+		xWriteCode( NAL_REF_IDC_PRIORITY_HIGHEST, 2 );
+	else if ( pcSlice->getDepth() == 0 )
+		xWriteCode( NAL_REF_IDC_PRIORITY_HIGH, 2 );
+	else if ( (pcSlice->getDepth() > 0)&&(pcSlice->isReferenced()) )
+		xWriteCode( NAL_REF_IDC_PRIORITY_LOW, 2 );
+	else if ( (pcSlice->getDepth() > 0)&&(!pcSlice->isReferenced()) )
+		xWriteCode( NAL_REF_IDC_PRIORITY_LOWEST, 2 );
+	else
+		assert(false);
+	//} [KSI] - ~MVC
+	xWriteCode( 0, 1);
+	xWriteCode( NAL_UNIT_CODED_SLICE_LAYER_EXTENSION, 5);
+
+	xWriteFlag( 0 ); //svc_extension_flag
+	xWriteFlag( (UInt)(!( (pcSlice->getPOC() == 0)&&(pcSlice->getSliceType() == I_SLICE) )) );          //non_idr_flag    - u(1)
+	xWriteCode( (UInt)pcSlice->getDepth(), 6 );                                                         //priority_id     - u(6)
+	xWriteCode( (UInt)pcCfg->getCurrentViewID(), 10 );                                                  //view_id         - u(10)
+	xWriteCode( (UInt)pcSlice->getDepth(), 3 );                                                         //temporal_id     - u(3)
+	xWriteFlag( (UInt)(pcSlice->getPOC() == 0 || pcSlice->getPOC() % pcCfg->getIntraPeriod() == 0) );   //anchor_pic_flag - u(1)
+	xWriteFlag( (UInt)(true) );                                                                         //inter_view_flag - u(1)
+	xWriteFlag( (UInt)(true) );                                                                         //reserved_one_bit- u(1)
+#endif
+	xWriteCode  (pcSlice->getPOC(), 10 );   //  9 == SPS->Log2MaxFrameNum
+	xWriteUvlc  (pcSlice->getSliceType() );
+	xWriteSvlc  (pcSlice->getSliceQp() );
+
+	xWriteFlag  (pcSlice->getSymbolMode() > 0 ? 1 : 0);
+
+	if (!pcSlice->isIntra())
+	{
+		xWriteFlag  (pcSlice->isReferenced() ? 1 : 0);
+#ifdef ROUNDING_CONTROL_BIPRED
+		xWriteFlag  (pcSlice->isRounding() ? 1 : 0);
+#endif
+	}
+
+	xWriteFlag  (pcSlice->getLoopFilterDisable());
+
+	if (!pcSlice->isIntra())
+	{
+		xWriteCode  ((pcSlice->getNumRefIdx( REF_PIC_LIST_0 )), 3 );
+	}
+	else
+	{
+		pcSlice->setNumRefIdx(REF_PIC_LIST_0, 0);
+	}
+	if (pcSlice->isInterB())
+	{
+		xWriteCode  ((pcSlice->getNumRefIdx( REF_PIC_LIST_1 )), 3 );
+	}
+	else
+	{
+		pcSlice->setNumRefIdx(REF_PIC_LIST_1, 0);
+	}
+
+	xWriteFlag  (pcSlice->getDRBFlag() ? 1 : 0 );
+	if ( !pcSlice->getDRBFlag() )
+	{
+		xWriteCode  (pcSlice->getERBIndex(), 2);
+	}
+
+	xWriteUvlc  ( pcSlice->getInterpFilterType() );
+
+#if AMVP_NEIGH_COL
+	if ( pcSlice->getSliceType() == B_SLICE )
+	{
+		xWriteFlag( pcSlice->getColDir() );
+	}
+#endif
+}
+//} [KSI] - ~MVC
+
 
 Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
 {
 #if HHI_NAL_UNIT_SYNTAX
-  // here someone can add an appropriated NalRefIdc type 
-  xWriteCode( NAL_REF_IDC_PRIORITY_HIGHEST, 2);
+  // here someone can add an appropriated NalRefIdc type
+  //{ [KSI] - MVC
+  if ( (pcSlice->getPOC() == 0)&&(pcSlice->getSliceType() == I_SLICE) ) // IDR
+	  xWriteCode( NAL_REF_IDC_PRIORITY_HIGHEST, 2 );
+  else if ( pcSlice->getDepth() == 0 )
+	  xWriteCode( NAL_REF_IDC_PRIORITY_HIGH, 2 );
+  else if ( (pcSlice->getDepth() > 0)&&(pcSlice->isReferenced()) )
+	  xWriteCode( NAL_REF_IDC_PRIORITY_LOW, 2 );
+  else if ( (pcSlice->getDepth() > 0)&&(!pcSlice->isReferenced()) )
+	  xWriteCode( NAL_REF_IDC_PRIORITY_LOWEST, 2 );
+  else
+	  assert(false);
+  //} [KSI] - ~MVC
   xWriteCode( 0, 1);
   xWriteCode( NAL_UNIT_CODED_SLICE, 5);
 #endif
