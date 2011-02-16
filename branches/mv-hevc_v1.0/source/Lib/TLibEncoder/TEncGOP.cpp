@@ -198,6 +198,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 	  // [KSI] ViewID와 같은 정보는 이미 SPS에 있고, 디코딩 할 때에도 역시 SPS를 참조 하면 되기 때문이다.
 	  pcSlice->setRefPicList ( rcListPic );
 
+	  //{ [KSI] - MVC
 	  // [KSI] Reference List의 맨 마지막에 Inter-view용 reference picture를 설정한다.
 	  if ( m_pcCfg->getMVC() )
 	  {
@@ -205,6 +206,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 		  pcSlice->setInterviewRefPicList( m_pcEncTop->getMultiView(), uiPOCCurr, REF_PIC_LIST_0, bAnchor);
 		  pcSlice->setInterviewRefPicList( m_pcEncTop->getMultiView(), uiPOCCurr, REF_PIC_LIST_1, bAnchor);
 	  }
+	  //} [KSI] - ~MVC
 	  
       //  Slice info. refinement
       if ( (pcSlice->getSliceType() == B_SLICE) && (pcSlice->getNumRefIdx(REF_PIC_LIST_1) == 0) )

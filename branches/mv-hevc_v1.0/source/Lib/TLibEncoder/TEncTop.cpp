@@ -156,9 +156,11 @@ Void TEncTop::init()
   // initialize encoder search class
   m_cSearch.init( this, &m_cTrQuant, m_iSearchRange, m_iFastSearch, 0, &m_cEntropyCoder, &m_cRdCost, getRDSbacCoder(), getRDGoOnSbacCoder() );
 
+  //{ [KSI] - MVC
   // initialize multiview reference list
   // [KSI] Multiview reference list를 초기화 한다.
   m_cMultiView.openMultiView( m_uiNumViewsMinusOne+1, m_iGOPSize, m_iSourceWidth, m_iSourceHeight, g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+  //} [KSI] - ~MVC
 }
 
 // ====================================================================================================================
@@ -180,7 +182,6 @@ Void TEncTop::deletePicBuffer()
   }
 }
 
-// [KSI] MultiView를 위해 Interface 수정.
 /**
  - Application has picture buffer list with size of GOP + 1
  - Picture buffer list acts like as ring buffer
@@ -195,8 +196,10 @@ Void TEncTop::deletePicBuffer()
  \retval  iNumEncoded         number of encoded pictures
  */
 Void TEncTop::encode( bool bEos, TComPicYuv* pcPicYuvOrg,
+				//{ [KSI] - MVC
 					  TComList<TComPicYuv*>& rcListFwdViews,
 					  TComList<TComPicYuv*>& rcListBwdViews,
+			    //} [KSI] - ~MVC
 					  TComList<TComPicYuv*>& rcListPicYuvRecOut,
 					  TComList<TComBitstream*>& rcListBitstreamOut,
 					  Int& iNumEncoded )
@@ -211,15 +214,17 @@ Void TEncTop::encode( bool bEos, TComPicYuv* pcPicYuvOrg,
   // [KSI] 위에서 얻어온 TComPic에 TComPicYuv를 복사한다. 그리고, 그 다음부터는 pcPicYuvOrg의 쓸모는 끝난다.
   pcPicYuvOrg->copyToPic( pcPicCurr->getPicYuvOrg() );
 
-  // [KSI] Inter-view prediction을 위해 기 ENC된 View Object의 RECON 파일에서 읽어온 프레임을 Multiview reference list에 설정한다.
+  //{ [KSI] - MVC
+  // [KSI] Inter-view prediction을 위해 기 ENC된 View Component의 RECON 파일에서 읽어온 프레임을 Multiview reference list에 설정한다.
   // [KSI] SPS의 설정에 따라, 여러 view를 reference할 수 있으므로, Multiview reference list는 조금 복잡한 편이다.
   if ( m_bMVC ) xAddMultiView(rcListFwdViews, rcListBwdViews);
+  //} [KSI] - ~MVC
   
   // [KSI] 첫 Picture가 아니고, m_iNumPicRcvd가 GOP와 다르고, GOP는 0이 아니며, EOS가 아닐 때는 그냥 리턴한다.
   // [KSI] GOP 단위로 m_cPicList에 원본을 쌓은다음 GOP 만큼을 한번에 Encode하기 위함이다.
-  // [KSI] m_cPicList의 각 Element는 Picture의 원본/RECON/Bitstream을 모두 보관하고 있다. --> Reference List의 원본으로 쓸 수 있는 이유.
+  // [KSI] m_cPicList의 각 Element는 Picture의 원본/RECON/Metadata를 모두 보관하고 있다. --> Decoded Picture Buffer 로 쓸 수 있는 이유.
   // [KSI] 첫 Picture는 바로 Encode하기 때문에, GOP 만큼 읽어오면 다음 I Picture 대상 까지 읽어오게 된다.
-  // [KSI] 자연스럽게 Open GOP 구조의 Hier. B Encoding Structure를 구성하게 된다.
+  // [KSI] 자연스럽게 Open GOP 구조의 Hierarchical B Encoding Structure를 구성하게 된다.
   if ( m_iPOCLast != 0 && ( m_iNumPicRcvd != m_iGOPSize && m_iGOPSize ) && !bEos )
   {
     iNumEncoded = 0;
@@ -300,6 +305,7 @@ Void TEncTop::xGetNewPicBuffer ( TComPic*& rpcPic )
   rpcPic->getPicYuvRec()->setBorderExtension(false);
 }
 
+//{ [KSI] - MVC
 Void  TEncTop::xAddMultiView( TComList<TComPicYuv*>& rcListFwdViews, TComList<TComPicYuv*>& rcListBwdViews )
 {
   UInt uiCurrentViewIndex;
@@ -366,6 +372,7 @@ Void  TEncTop::xAddMultiView( TComList<TComPicYuv*>& rcListFwdViews, TComList<TC
 	  }
   }
 }
+//} [KSI] - MVC
 
 
 Void TEncTop::xInitSPS()
@@ -418,6 +425,7 @@ Void TEncTop::xInitSPS()
   m_cSPS.setBitDepth    ( g_uiBitDepth        );
   m_cSPS.setBitIncrement( g_uiBitIncrement    );
 
+  //{ [KSI] - MVC
   m_cSPS.setMVC                          (m_bMVC);
   m_cSPS.setCurrentViewID                (m_uiCurrentViewID);
   m_cSPS.setNumViewsMinusOne             (m_uiNumViewsMinusOne);
@@ -430,5 +438,6 @@ Void TEncTop::xInitSPS()
   m_cSPS.setNumNonAnchorRefsL1           (m_auiNumNonAnchorRefsL1);
   m_cSPS.setNonAnchorRefL0               (m_aauiNonAnchorRefL0);
   m_cSPS.setNonAnchorRefL1               (m_aauiNonAnchorRefL1);
+  //} [KSI] - ~MVC
 }
 

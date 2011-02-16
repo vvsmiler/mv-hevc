@@ -66,8 +66,10 @@ private:
   
   Int                        m_iFrameRcvd;                  ///< number of received frames
 
-  TAppEncMultiView           m_cFwdView;                    ///< multiview reference of current view
-  TAppEncMultiView           m_cBwdView;                    ///< multiview reference of current view
+  //{ [KSI] - MVC
+  TAppEncMultiView           m_cFwdView;                    ///< [KSI] Managing file list that contain reconstructd frames for forward inter-view prediction of current view
+  TAppEncMultiView           m_cBwdView;                    ///< [KSI] Managing file list that contain reconstructd frames for backward inter-view prediction of current view 
+  //} [KSI] - ~MVC
   
 protected:
   // initialization

@@ -30,15 +30,17 @@
 */
 
 /** \file     TAppMultiView.h
-    \brief    Reference picture files for multiview prediction. (header)
+    \brief    [KSI] Managing files that contains reconstructed pictures of previous encoded streams for inter-view prediction. (header)
 */
+#ifndef _TAPPENCMULTIVIEW_
+#define _TAPPENCMULTIVIEW_
 
 #include "../../Lib/TLibCommon/CommonDef.h"
 #include "../../Lib/TLibCommon/TComList.h"
-#include "../../Lib/TLibVideoIO/TVideoIOYuv.h"
-#include "../../Lib/TLibEncoder/TEncCfg.h"
 
-
+class TEncCfg;
+class TVideoIOYuv;
+class TComPicYuv;
 
 class TAppEncMultiView
 {
@@ -57,3 +59,5 @@ private:
 	TComList<TVideoIOYuv*>  m_cListAnchorViewFiles;
 	TComList<TVideoIOYuv*>  m_cListNonAnchorViewFiles;
 };
+
+#endif

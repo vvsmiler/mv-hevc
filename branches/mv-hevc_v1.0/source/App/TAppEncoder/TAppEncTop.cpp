@@ -120,7 +120,7 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setUseRoundingControlBipred(m_useRoundingControlBipred);
 #endif
 
-  //===== Multi View Coding ====
+  //{ [KSI] - MVC
   m_cTEncTop.setMVC                          (m_bMVC);
   m_cTEncTop.setCurrentViewID                (m_uiCurrentViewID);
   m_cTEncTop.setNumViewsMinusOne             (m_uiNumViewsMinusOne);
@@ -133,6 +133,7 @@ Void TAppEncTop::xInitLibCfg()
   m_cTEncTop.setNumNonAnchorRefsL1           (m_auiNumNonAnchorRefsL1);
   m_cTEncTop.setNonAnchorRefL0               (m_aauiNonAnchorRefL0);
   m_cTEncTop.setNonAnchorRefL1               (m_aauiNonAnchorRefL1);
+  //} [KSI] - ~MVC
 }
 
 Void TAppEncTop::xCreateLib()
@@ -160,11 +161,13 @@ Void TAppEncTop::xDestroyLib()
 Void TAppEncTop::xInitLib()
 {
   m_cTEncTop.init();
+  //{ [KSI] - MVC
   if ( m_bMVC )
   {
 	  m_cFwdView.openMultiView(m_pchFileNamePrefix, &m_cTEncTop, TAppEncMultiView::FWD);
 	  m_cBwdView.openMultiView(m_pchFileNamePrefix, &m_cTEncTop, TAppEncMultiView::BWD);
   }
+  //} [KSI] - MVC
 }
 
 // ====================================================================================================================
@@ -184,8 +187,10 @@ Void TAppEncTop::encode()
   TComPicYuv*       pcPicYuvOrg = new TComPicYuv;
   TComPicYuv*       pcPicYuvRec = NULL;
   TComBitstream*    pcBitstream = NULL;
-  TComList<TComPicYuv*> pcListFwdView;
-  TComList<TComPicYuv*> pcListBwdView;
+  //{ [KSI] - MVC
+  TComList<TComPicYuv*> cListFwdViewFrames;
+  TComList<TComPicYuv*> cListBwdViewFrames;
+  //} [KSI] - ~MVC
   
   // initialize internal class & member variables
   xInitLibCfg();
@@ -195,7 +200,6 @@ Void TAppEncTop::encode()
   // main encoder loop
   Int   iNumEncoded = 0;
   Bool  bEos = false;
-  Bool  bAnchor = false;
   
   // allocate original YUV buffer
   pcPicYuvOrg->create( m_iSourceWidth, m_iSourceHeight, m_uiMaxCUWidth, m_uiMaxCUHeight, m_uiMaxCUDepth );
@@ -204,7 +208,7 @@ Void TAppEncTop::encode()
   {
     // get buffers
 	// [KSI] m_cListPicYuvRec, m_cListBitstream의 링 버퍼를 조작하여 가장 최근(현재) Picture를 push_bach 하여 Encoding 한 결과물을 보관 할 준비를 한다.
-    // [KSI] 링 버퍼는 GOP 만큼의 YUV Picture와 Bitstream을 보관 한다.
+    // [KSI] 링 버퍼는 GOP+1 만큼의 YUV Picture와 Bitstream을 보관 한다.
 	// [KSI] TEncTop::m_cListPic과 동기가 맞게 작동 하는 눈치이다.
     // [KSI] 밑에 TEncTop::encode의 호출을 보면 알 수 있듯이 여기에 정의된 지역변수는 쓸모가 없다. 헷갈리니 지우고 싶지만 일단 보류.
     xGetBuffer( pcPicYuvRec, pcBitstream );
@@ -214,12 +218,14 @@ Void TAppEncTop::encode()
     m_cTVideoIOYuvInputFile.read( pcPicYuvOrg, m_aiPad );
 
 	// [KSI] 참조 중인 View Component에서 FrameList를 얻어온다.
+	//{ [KSI] - MVC
 	if ( m_bMVC )
 	{
-		bAnchor = (m_iFrameRcvd == 0 || m_iFrameRcvd % m_iIntraPeriod == 0 ) ? true : false;
-		m_cFwdView.generateMultiViewList(pcListFwdView, bAnchor);
-		m_cBwdView.generateMultiViewList(pcListBwdView, bAnchor);
+		Bool bAnchor = (m_iFrameRcvd == 0 || m_iFrameRcvd % m_iIntraPeriod == 0 ) ? true : false;
+		m_cFwdView.generateMultiViewList(cListFwdViewFrames, bAnchor);
+		m_cBwdView.generateMultiViewList(cListBwdViewFrames, bAnchor);
 	}
+	//} [KSI] - ~MVC
 	
     // increase number of received frames
     m_iFrameRcvd++;
@@ -230,7 +236,7 @@ Void TAppEncTop::encode()
     
     // call encoding function for one frame
 	// [KSI] MultiView를 위해 Interface 수정.
-    m_cTEncTop.encode( bEos, pcPicYuvOrg, pcListFwdView, pcListBwdView, m_cListPicYuvRec, m_cListBitstream, iNumEncoded );
+    m_cTEncTop.encode( bEos, pcPicYuvOrg, cListFwdViewFrames, cListBwdViewFrames, m_cListPicYuvRec, m_cListBitstream, iNumEncoded );
     
     // write bistream to file if necessary
     if ( iNumEncoded > 0 )

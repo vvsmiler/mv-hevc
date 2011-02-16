@@ -50,11 +50,11 @@ namespace po = df::program_options_lite;
 Bool confirmPara(Bool bflag, const char* message);
 
 //{ [KSI] - MVC
-class OptionMVC;
+class OptionSpecificMVC;
 struct OptionsMVC: public po::Options
 {
 	OptionsMVC(TAppEncCfg& AppEncCfg_) : AppEncCfg(AppEncCfg_) {}
-	OptionMVC addOptionsMVC();
+	OptionSpecificMVC addOptionsMVC();
 	TAppEncCfg& AppEncCfg;
 };
 
@@ -80,18 +80,18 @@ struct OptionFuncMVC : public po::OptionBase
 	OptionsMVC& parent;
 };
 
-class OptionMVC
+class OptionSpecificMVC
 {
 public:
-	OptionMVC(OptionsMVC& parent_) : parent(parent_) {}
+	OptionSpecificMVC(OptionsMVC& parent_) : parent(parent_) {}
 public:
 	template<typename T>
-	OptionMVC& operator()(const std::string& name, T& storage, T default_val, const std::string& desc = "")
+	OptionSpecificMVC& operator()(const std::string& name, T& storage, T default_val, const std::string& desc = "")
 	{
 		parent.addOption(new po::Option<T>(name, storage, default_val, desc));
 		return *this;
 	}
-	OptionMVC& operator()(const std::string& name, OptionFuncMVC::Func *func, const std::string& desc = "")
+	OptionSpecificMVC& operator()(const std::string& name, OptionFuncMVC::Func *func, const std::string& desc = "")
 	{
 		parent.addOption(new OptionFuncMVC(name, parent, func, desc));
 		return *this;
@@ -100,9 +100,9 @@ private:
 	OptionsMVC&	parent;
 };
 
-OptionMVC OptionsMVC::addOptionsMVC()
+OptionSpecificMVC OptionsMVC::addOptionsMVC()
 {
-	return OptionMVC(*this);
+	return OptionSpecificMVC(*this);
 }
 
 DECL_HANDLER(NumViewsMinusOne)

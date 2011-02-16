@@ -41,7 +41,9 @@
 #include "../TLibCommon/TComPrediction.h"
 #include "../TLibCommon/TComTrQuant.h"
 #include "../TLibCommon/TComBitStream.h"
+//{ [KSI] - MVC
 #include "../TLibCommon/TComMultiView.h"
+//} [KSI] - ~MVC
 
 #include "../TLibVideoIO/TVideoIOYuv.h"
 #include "../TLibVideoIO/TVideoIOBits.h"
@@ -71,8 +73,8 @@ private:
   
   // encoder search
   TEncSearch              m_cSearch;                      ///< encoder search class
-  TEncEntropy*            m_pcEntropyCoder;                     ///< entropy encoder 
-  TEncCavlc*              m_pcCavlcCoder;                       ///< CAVLC encoder  
+  TEncEntropy*            m_pcEntropyCoder;               ///< entropy encoder 
+  TEncCavlc*              m_pcCavlcCoder;                 ///< CAVLC encoder  
   // coding tool
   TComTrQuant             m_cTrQuant;                     ///< transform & quantization class
   TComLoopFilter          m_cLoopFilter;                  ///< deblocking filter class
@@ -81,7 +83,9 @@ private:
   TEncCavlc               m_cCavlcCoder;                  ///< CAVLC encoder
   TEncSbac                m_cSbacCoder;                   ///< SBAC encoder
   TEncBinCABAC            m_cBinCoderCABAC;               ///< bin coder CABAC
-  TComMultiView           m_cMultiView;                   ///< [KSI] MultiView reference list
+  //{ [KSI] - MVC
+  TComMultiView           m_cMultiView;                   ///< [KSI] Decoded picture buffer that contain each video stream of all view components for inter-view prediction.
+  //} [KSI] - ~MVC
 
   
   // processing unit
@@ -102,7 +106,9 @@ private:
   
 protected:
   Void  xGetNewPicBuffer  ( TComPic*& rpcPic );           ///< get picture buffer which will be processed
-  Void  xAddMultiView     ( TComList<TComPicYuv*>& rcListFwdViews, TComList<TComPicYuv*>& rcListBwdViews ); ///< [KSI] add received multiviw reference pictures to multiview reference list
+  //{ [KSI] - MVC
+  Void  xAddMultiView     ( TComList<TComPicYuv*>& rcListFwdViews, TComList<TComPicYuv*>& rcListBwdViews ); ///< [KSI] Add frame list from reconstruct files to decoded picture buffer of each video stream for inter-view prediction.
+  //} [KSI] - ~MVC
   Void  xInitSPS          ();                             ///< initialize SPS from encoder options
   
 public:
@@ -124,7 +130,9 @@ public:
   TComTrQuant*            getTrQuant            () { return  &m_cTrQuant;             }
   TComLoopFilter*         getLoopFilter         () { return  &m_cLoopFilter;          }
   TEncAdaptiveLoopFilter* getAdaptiveLoopFilter () { return  &m_cAdaptiveLoopFilter;  }
+  //{ [KSI] - MVC
   TComMultiView*          getMultiView          () { return  &m_cMultiView;           } // [KSI] Multiview reference list
+  //} [KSI] - ~MVC
   
   TEncGOP*                getGOPEncoder         () { return  &m_cGOPEncoder;          }
   TEncSlice*              getSliceEncoder       () { return  &m_cSliceEncoder;        }
@@ -146,11 +154,12 @@ public:
   // encoder function
   // -------------------------------------------------------------------------------------------------------------------
   
-  // [KSI] MultiView를 위해 Interface 수정.
   /// encode several number of pictures until end-of-sequence
   Void encode( bool bEos, TComPicYuv* pcPicYuvOrg,
+  //{ [KSI] - MVC
 	           TComList<TComPicYuv*>& rcListFwdViews,
 	           TComList<TComPicYuv*>& rcListBwdViews,
+  //} [KSI] - ~MVC
 	           TComList<TComPicYuv*>& rcListPicYuvRecOut,
 			   TComList<TComBitstream*>& rcListBitstreamOut,
 			   Int& iNumEncoded );

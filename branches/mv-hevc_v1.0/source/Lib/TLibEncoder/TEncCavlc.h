@@ -43,6 +43,7 @@
 #include "../TLibCommon/CommonDef.h"
 #include "../TLibCommon/TComBitStream.h"
 #include "TEncEntropy.h"
+#include "TEncCfg.h"
 
 class TEncTop;
 
@@ -167,7 +168,16 @@ public:
   UInt  getCoeffCost          ()                { return  m_uiCoeffCost;  }
   
   Void  codeSPS                 ( TComSPS* pcSPS );
+  //{ [KSI] - MVC
+  Void  codeSubsetSPS_MVC       ( TComSPS* pcSPS );
+  //} [KSI] - ~MVC
   Void  codePPS                 ( TComPPS* pcPPS );
+  //{ [KSI] - MVC
+  Void  codePrefix              ( TComSlice* pcSlice, TEncCfg* pcCfg );
+  //} [KSI] - ~MVC
+  //{ [KSI] - MVC
+  Void  codeSliceExtensionHeader( TComSlice* pcSlice, TEncCfg* pcCfg );
+  //} [KSI] - ~MVC
   Void  codeSliceHeader         ( TComSlice* pcSlice );
   Void  codeTerminatingBit      ( UInt uilsLast );
   Void  codeSliceFinish         ();

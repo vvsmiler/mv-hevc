@@ -131,47 +131,219 @@ Void TDecCavlc::parseSPS(TComSPS* pcSPS)
   g_uiIBDI_MAX  = g_uiBASE_MAX << g_uiBitIncrement;
 #else
   g_uiIBDI_MAX  = ((1<<(g_uiBitDepth+g_uiBitIncrement))-1);
-#endif
-
-  // [KSI] Multiview
-  //{
-  xReadUvlc( uiCode ); pcSPS->setNumViewsMinusOne( uiCode );
-  for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
-  {
-	  xReadUvlc( uiCode ); pcSPS->setViewOrder( i, uiCode );
-  }
-
-  for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
-  {
-	  xReadUvlc( uiCode ); pcSPS->setNumAnchorRefsL0(i, uiCode );
-	  for ( UInt j = 0; j < pcSPS->getNumAnchorRefsL0()[i]; j++ )
-	  {
-		  xReadUvlc( uiCode ); pcSPS->setAnchorRefL0(i, j, uiCode);
-	  }
-	  xReadUvlc( uiCode ); pcSPS->setNumAnchorRefsL1( i, uiCode );
-	  for ( UInt j = 0; j < pcSPS->getNumAnchorRefsL1()[i]; j++ )
-	  {
-		  xReadUvlc( uiCode ); pcSPS->setAnchorRefL1( i, j, uiCode );
-	  }
-  }
-
-  for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
-  {
-	  xReadUvlc( uiCode ); pcSPS->setNumNonAnchorRefsL0( i, uiCode );
-	  for ( UInt j = 0; j < pcSPS->getNumNonAnchorRefsL0()[i]; j++ )
-	  {
-		  xReadUvlc( uiCode ); pcSPS->setNonAnchorRefL0( i, j, uiCode );
-	  }
-	  xReadUvlc( uiCode ); pcSPS->setNumNonAnchorRefsL1( i, uiCode );
-	  for ( UInt j = 0; j < pcSPS->getNumNonAnchorRefsL1()[i]; j++ )
-	  {
-		  xReadUvlc( uiCode ); pcSPS->setNonAnchorRefL1( i, j, uiCode );
-	  }
-  }
-  //}
-  
+#endif  
   return;
 }
+
+//{ [KSI] - MVC
+Void TDecCavlc::parseSubsetSPS_MVC(TComSPS* pcSPS)
+{
+	UInt  uiCode;
+#if HHI_NAL_UNIT_SYNTAX
+	xReadCode ( 2, uiCode ); //NalRefIdc
+	xReadCode ( 1, uiCode ); assert( 0 == uiCode); // zero bit
+	xReadCode ( 5, uiCode ); assert( NAL_UNIT_SUBSET_SPS == uiCode);//NalUnitType
+#endif
+	// Structure
+	xReadUvlc ( uiCode ); pcSPS->setWidth       ( uiCode    );
+	xReadUvlc ( uiCode ); pcSPS->setHeight      ( uiCode    );
+	xReadUvlc ( uiCode ); pcSPS->setPadX        ( uiCode    );
+	xReadUvlc ( uiCode ); pcSPS->setPadY        ( uiCode    );
+
+	xReadUvlc ( uiCode ); 
+	pcSPS->setMaxCUWidth  ( uiCode    ); g_uiMaxCUWidth  = uiCode;
+	pcSPS->setMaxCUHeight ( uiCode    ); g_uiMaxCUHeight = uiCode;
+
+	xReadUvlc ( uiCode ); 
+	pcSPS->setMaxCUDepth  ( uiCode+1  ); g_uiMaxCUDepth  = uiCode + 1;
+	UInt uiMaxCUDepthCorrect = uiCode;
+
+	xReadUvlc( uiCode ); pcSPS->setQuadtreeTULog2MinSize( uiCode + 2 );
+	xReadUvlc( uiCode ); pcSPS->setQuadtreeTULog2MaxSize( uiCode + pcSPS->getQuadtreeTULog2MinSize() );
+	pcSPS->setMaxTrSize( 1<<(uiCode + pcSPS->getQuadtreeTULog2MinSize()) );  
+	xReadUvlc ( uiCode ); pcSPS->setQuadtreeTUMaxDepthInter( uiCode+1 );
+	xReadUvlc ( uiCode ); pcSPS->setQuadtreeTUMaxDepthIntra( uiCode+1 );
+	g_uiAddCUDepth = 0;
+	while( ( pcSPS->getMaxCUWidth() >> uiMaxCUDepthCorrect ) > ( 1 << ( pcSPS->getQuadtreeTULog2MinSize() + g_uiAddCUDepth )  ) ) g_uiAddCUDepth++;    
+	pcSPS->setMaxCUDepth( uiMaxCUDepthCorrect+g_uiAddCUDepth  ); g_uiMaxCUDepth  = uiMaxCUDepthCorrect+g_uiAddCUDepth;
+	// BB: these parameters may be removed completly and replaced by the fixed values
+	pcSPS->setMinTrDepth( 0 );
+	pcSPS->setMaxTrDepth( 1 );
+
+	// Tool on/off
+	xReadFlag( uiCode ); pcSPS->setUseALF ( uiCode ? true : false );
+	xReadFlag( uiCode ); pcSPS->setUseDQP ( uiCode ? true : false );
+	xReadFlag( uiCode ); pcSPS->setUseLDC ( uiCode ? true : false );
+#if HHI_MRG
+	xReadFlag( uiCode ); pcSPS->setUseMRG ( uiCode ? true : false ); // SOPH:
+#endif
+
+#if HHI_RMP_SWITCH
+	xReadFlag( uiCode ); pcSPS->setUseRMP( uiCode ? true : false );
+#endif
+	// number of taps for DIF
+	xReadUvlc( uiCode ); pcSPS->setDIFTap ( (uiCode+2)<<1 );  // 4, 6, 8, 10, 12
+
+	// AMVP mode for each depth (AM_NONE or AM_EXPL)
+	for (Int i = 0; i < pcSPS->getMaxCUDepth(); i++)
+	{
+		xReadFlag( uiCode );
+		pcSPS->setAMVPMode( i, (AMVP_MODE)uiCode );
+	}
+
+	// Bit-depth information
+	xReadUvlc( uiCode ); pcSPS->setBitDepth     ( uiCode+8 ); g_uiBitDepth     = uiCode + 8;
+	xReadUvlc( uiCode ); pcSPS->setBitIncrement ( uiCode   ); g_uiBitIncrement = uiCode;
+
+	g_uiBASE_MAX  = ((1<<(g_uiBitDepth))-1);
+
+#if IBDI_NOCLIP_RANGE
+	g_uiIBDI_MAX  = g_uiBASE_MAX << g_uiBitIncrement;
+#else
+	g_uiIBDI_MAX  = ((1<<(g_uiBitDepth+g_uiBitIncrement))-1);
+#endif
+
+	//{ [KSI] - MVC
+	xReadUvlc( uiCode ); pcSPS->setMVC( (uiCode == 0 ? false : true) );
+	xReadUvlc( uiCode ); pcSPS->setNumViewsMinusOne( uiCode );
+	for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
+	{
+		xReadUvlc( uiCode ); pcSPS->setViewOrder( i, uiCode );
+	}
+
+	for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
+	{
+		xReadUvlc( uiCode ); pcSPS->setNumAnchorRefsL0(i, uiCode );
+		for ( UInt j = 0; j < pcSPS->getNumAnchorRefsL0()[i]; j++ )
+		{
+			xReadUvlc( uiCode ); pcSPS->setAnchorRefL0(i, j, uiCode);
+		}
+		xReadUvlc( uiCode ); pcSPS->setNumAnchorRefsL1( i, uiCode );
+		for ( UInt j = 0; j < pcSPS->getNumAnchorRefsL1()[i]; j++ )
+		{
+			xReadUvlc( uiCode ); pcSPS->setAnchorRefL1( i, j, uiCode );
+		}
+	}
+
+	for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
+	{
+		xReadUvlc( uiCode ); pcSPS->setNumNonAnchorRefsL0( i, uiCode );
+		for ( UInt j = 0; j < pcSPS->getNumNonAnchorRefsL0()[i]; j++ )
+		{
+			xReadUvlc( uiCode ); pcSPS->setNonAnchorRefL0( i, j, uiCode );
+		}
+		xReadUvlc( uiCode ); pcSPS->setNumNonAnchorRefsL1( i, uiCode );
+		for ( UInt j = 0; j < pcSPS->getNumNonAnchorRefsL1()[i]; j++ )
+		{
+			xReadUvlc( uiCode ); pcSPS->setNonAnchorRefL1( i, j, uiCode );
+		}
+	}
+	//} [KSI] - ~MVC
+	return;
+}
+//} [KSI] - ~MVC
+
+//{ [KSI] - MVC
+Void TDecCavlc::parsePrefix      (TComSlice*& rcSlice)
+{
+	UInt  uiCode;
+#if HHI_NAL_UNIT_SYNTAX
+	xReadCode ( 2, uiCode ); //NalRefIdc
+	xReadCode ( 1, uiCode ); assert( 0 == uiCode); // zero bit
+	xReadCode ( 5, uiCode ); assert( NAL_UNIT_CODED_SLICE_PREFIX == uiCode);//NalUnitType
+
+	xReadCode ( 1, uiCode ); //svc_extension_flag
+	xReadCode ( 1, uiCode ); //non_idr_flag    - u(1)
+	xReadCode ( 6, uiCode ); //priority_id     - u(6)
+	xReadCode (10, uiCode ); //view_id         - u(10)
+	xReadCode ( 3, uiCode ); //temporal_id     - u(3)
+	xReadCode ( 1, uiCode ); //anchor_pic_flag - u(1)
+	xReadCode ( 1, uiCode ); //inter_view_flag - u(1)
+	xReadCode ( 1, uiCode ); //reserved_one_bit- u(1)
+#endif
+	return;
+}
+//} [KSI] - ~MVC
+
+//{ [KSI] - MVC
+Void TDecCavlc::parseSliceExtensionHeader ( TComSlice*& rpcSlice )
+{
+	UInt  uiCode;
+	Int   iCode;
+#if HHI_NAL_UNIT_SYNTAX
+	xReadCode ( 2, uiCode ); //NalRefIdc
+	xReadCode ( 1, uiCode ); assert( 0 == uiCode); // zero bit
+	xReadCode ( 5, uiCode ); assert( NAL_UNIT_CODED_SLICE_LAYER_EXTENSION == uiCode);//NalUnitType
+
+	xReadCode ( 1, uiCode ); //svc_extension_flag
+	xReadCode ( 1, uiCode ); //non_idr_flag    - u(1)
+	xReadCode ( 6, uiCode ); //priority_id     - u(6)
+	xReadCode (10, uiCode ); //view_id         - u(10)
+	xReadCode ( 3, uiCode ); //temporal_id     - u(3)
+	xReadCode ( 1, uiCode ); //anchor_pic_flag - u(1)
+	xReadCode ( 1, uiCode ); //inter_view_flag - u(1)
+	xReadCode ( 1, uiCode ); //reserved_one_bit- u(1)
+#endif
+	xReadCode (10, uiCode);  rpcSlice->setPOC              (uiCode);             // 9 == SPS->Log2MaxFrameNum()
+	xReadUvlc (   uiCode);  rpcSlice->setSliceType        ((SliceType)uiCode);
+	xReadSvlc (    iCode);  rpcSlice->setSliceQp          (iCode);
+
+	xReadFlag ( uiCode );
+	rpcSlice->setSymbolMode( uiCode );
+
+	if (!rpcSlice->isIntra())
+		xReadFlag (   uiCode);
+	else
+		uiCode = 1;
+
+	rpcSlice->setReferenced       (uiCode ? true : false);
+
+#ifdef ROUNDING_CONTROL_BIPRED
+	if(!rpcSlice->isIntra())
+	{
+		xReadFlag( uiCode );
+		Bool b = (uiCode != 0);
+		rpcSlice->setRounding(b);
+	}
+#endif
+
+	xReadFlag (   uiCode);  rpcSlice->setLoopFilterDisable(uiCode ? 1 : 0);
+
+	if (!rpcSlice->isIntra())
+	{
+		xReadCode (3, uiCode);  rpcSlice->setNumRefIdx      (REF_PIC_LIST_0, uiCode);
+	}
+	else
+	{
+		rpcSlice->setNumRefIdx(REF_PIC_LIST_0, 0);
+	}
+	if (rpcSlice->isInterB())
+	{
+		xReadCode (3, uiCode);  rpcSlice->setNumRefIdx      (REF_PIC_LIST_1, uiCode);
+	}
+	else
+	{
+		rpcSlice->setNumRefIdx(REF_PIC_LIST_1, 0);
+	}
+
+	xReadFlag (uiCode);     rpcSlice->setDRBFlag          (uiCode ? 1 : 0);
+	if ( !rpcSlice->getDRBFlag() )
+	{
+		xReadCode(2, uiCode); rpcSlice->setERBIndex( (ERBIndex)uiCode );    assert (uiCode == ERB_NONE || uiCode == ERB_LTR);
+	}
+
+	xReadUvlc( uiCode ); rpcSlice->setInterpFilterType( uiCode );
+
+#if AMVP_NEIGH_COL
+	if ( rpcSlice->getSliceType() == B_SLICE )
+	{
+		xReadFlag (uiCode);
+		rpcSlice->setColDir(uiCode);
+	}
+#endif
+	return;
+}
+//} [KSI] - ~MVC
 
 Void TDecCavlc::parseSliceHeader (TComSlice*& rpcSlice)
 {
