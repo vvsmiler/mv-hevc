@@ -34,12 +34,28 @@
 */
 
 #include "TEncEntropy.h"
+#include "TEncCfg.h"
 
 Void TEncEntropy::setEntropyCoder ( TEncEntropyIf* e, TComSlice* pcSlice )
 {
   m_pcEntropyCoderIf = e;
   m_pcEntropyCoderIf->setSlice ( pcSlice );
 }
+
+//{ [KSI] - MVC
+Void TEncEntropy::encodePrefix( TComSlice* pcSlice, TEncCfg* pcCfg )
+{
+	m_pcEntropyCoderIf->codePrefix(pcSlice, pcCfg);
+	return;
+}
+//} [KSI] - ~MVC
+
+//{ [KSI] - MVC
+Void TEncEntropy::encodeSliceExtensionHeader( TComSlice* pcSlice, TEncCfg* pcCfg )
+{
+	m_pcEntropyCoderIf->codeSliceExtensionHeader(pcSlice, pcCfg);
+}
+//} [KSI] - ~MVC
 
 Void TEncEntropy::encodeSliceHeader ( TComSlice* pcSlice )
 {
@@ -70,6 +86,14 @@ Void TEncEntropy::encodeSPS( TComSPS* pcSPS )
   m_pcEntropyCoderIf->codeSPS( pcSPS );
   return;
 }
+
+//{ [KSI] - MMVC
+Void TEncEntropy::encodeSubsetSPS_MVC( TComSPS* pcSPS )
+{
+	m_pcEntropyCoderIf->codeSubsetSPS_MVC(pcSPS);
+	return;
+}
+//} [KSI] - ~MVC
 
 Void TEncEntropy::encodeSkipFlag( TComDataCU* pcCU, UInt uiAbsPartIdx, Bool bRD )
 {

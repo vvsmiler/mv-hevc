@@ -305,6 +305,20 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         // generate start code
         pcBitstreamOut->write( 1, 32);
 #endif
+
+		//[KSI] - MVC
+		if ( m_pcCfg->getNumViewsMinusOne() )
+		{
+			m_pcEntropyCoder->encodeSubsetSPS_MVC( pcSlice->getSPS() );
+#if HHI_NAL_UNIT_SYNTAX
+			pcBitstreamOut->write( 1, 1 );
+			pcBitstreamOut->writeAlignZero();
+			// generate start code
+			pcBitstreamOut->write( 1, 32);
+#endif
+		}
+		//[KSI] - ~MVC
+
         
         m_pcEntropyCoder->encodePPS( pcSlice->getPPS() );
 #if HHI_NAL_UNIT_SYNTAX
@@ -313,15 +327,51 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
         // generate start code
         pcBitstreamOut->write( 1, 32);
 #endif
+
+		//{ [KSI] - MVC
+		if ( m_pcCfg->getNumViewsMinusOne() )
+		{
+			m_pcEntropyCoder->encodePPS( pcSlice->getPPS() );
+#if HHI_NAL_UNIT_SYNTAX
+			pcBitstreamOut->write( 1, 1 );
+			pcBitstreamOut->writeAlignZero();
+			// generate start code
+			pcBitstreamOut->write( 1, 32);
+#endif
+		}
+		//} [KSI] - ~MVC
+
         m_bSeqFirst = false;
       }
       
 #if HHI_NAL_UNIT_SYNTAX
       UInt uiPosBefore = pcBitstreamOut->getNumberOfWrittenBits()>>3;
 #endif
+
+	  //{ [KSI] - MVC
+	  if ( m_pcCfg->getNumViewsMinusOne() && (m_pcCfg->getCurrentViewID() == m_pcCfg->getViewOrder()[0]) ) // [KSI] Base View
+	  {
+		  m_pcEntropyCoder->encodePrefix(pcSlice, m_pcCfg);
+#if HHI_NAL_UNIT_SYNTAX
+		  pcBitstreamOut->write( 1, 1 );
+		  pcBitstreamOut->writeAlignZero();
+		  // generate start code
+		  pcBitstreamOut->write( 1, 32);
+#endif
+		  uiPosBefore = pcBitstreamOut->getNumberOfWrittenBits()>>3;
+		  // write SliceHeader
+		  m_pcEntropyCoder->encodeSliceHeader (pcSlice);
+	  }
+	  else if ( m_pcCfg->getNumViewsMinusOne() && (m_pcCfg->getCurrentViewID() != m_pcCfg->getViewOrder()[0]) )
+	  {
+		  m_pcEntropyCoder->encodeSliceExtensionHeader(pcSlice, m_pcCfg);
+	  }
+	  else
+	  {
+		  m_pcEntropyCoder->encodeSliceHeader (pcSlice);
+	  }
+	  //} [KSI] - ~MVC
       
-      // write SliceHeader
-      m_pcEntropyCoder->encodeSliceHeader ( pcSlice                 );
       
       // is it needed?
       if ( pcSlice->getSymbolMode() )
