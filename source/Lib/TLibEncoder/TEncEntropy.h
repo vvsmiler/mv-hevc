@@ -44,6 +44,7 @@
 #include "../TLibCommon/TComTrQuant.h"
 class TEncSbac;
 class TEncCavlc;
+class TEncCfg;
 
 // ====================================================================================================================
 // Class definition
@@ -67,10 +68,20 @@ public:
   virtual UInt  getCoeffCost          ()                = 0;
   
   virtual Void  codeSPS                 ( TComSPS* pcSPS )                                      = 0;
+  //{ [KSI] - MVC
+  virtual Void  codeSubsetSPS_MVC       ( TComSPS* pcSPS )                                      = 0;
+  //} [KSI] - ~MVC
   virtual Void  codePPS                 ( TComPPS* pcPPS )                                      = 0;
+  //{ [KSI] - MVC
+  virtual Void  codePrefix              ( TComSlice* pcSlice, TEncCfg* pcCfg )                  = 0;
+  //} [KSI] - ~MVC
+  //{ [KSI] - MVC
+  virtual Void  codeSliceExtensionHeader( TComSlice* pcSlice, TEncCfg* pcCfg )                  = 0;
+  //} [KSI] - ~MVC
   virtual Void  codeSliceHeader         ( TComSlice* pcSlice )                                  = 0;
   virtual Void  codeTerminatingBit      ( UInt uilsLast )                                       = 0;
   virtual Void  codeSliceFinish         ()                                                      = 0;
+
   
   virtual Void codeAlfCtrlDepth() = 0;
   virtual Void codeMVPIdx ( TComDataCU* pcCU, UInt uiAbsPartIdx, RefPicList eRefList ) = 0;
@@ -129,6 +140,12 @@ public:
   UInt    getCoeffCost              ()                        { return  m_pcEntropyCoderIf->getCoeffCost(); }
   Void    resetEntropy              ()                        { m_pcEntropyCoderIf->resetEntropy();  }
   
+  //{ [KSI] - MVC
+  Void  encodePrefix              ( TComSlice* pcSlice, TEncCfg* pcCfg );
+  //} [KSI] - ~MVC
+  //{ [KSI] - MVC
+  Void  encodeSliceExtensionHeader( TComSlice* pcSlice, TEncCfg* pcCfg );
+  //} [KSI] - ~MVC
   Void    encodeSliceHeader         ( TComSlice* pcSlice );
   Void    encodeTerminatingBit      ( UInt uiIsLast );
   Void    encodeSliceFinish         ();
@@ -141,6 +158,9 @@ public:
 public:
   // SPS
   Void encodeSPS               ( TComSPS* pcSPS );
+  //{ [KSI] - MVC
+  Void encodeSubsetSPS_MVC     ( TComSPS* pcSPS );
+  //} [KSI] - ~MVC
   Void encodePPS               ( TComPPS* pcPPS );
   Bool getAlfCtrl() {return m_pcEntropyCoderIf->getAlfCtrl();}
   UInt getMaxAlfCtrlDepth() {return m_pcEntropyCoderIf->getMaxAlfCtrlDepth();}

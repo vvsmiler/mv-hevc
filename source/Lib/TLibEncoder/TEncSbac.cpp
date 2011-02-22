@@ -138,11 +138,38 @@ Void TEncSbac::codeSPS( TComSPS* pcSPS )
   return;
 }
 
+//{ [KSI] - MVC
+Void  TEncSbac::codeSubsetSPS_MVC( TComSPS* pcSPS )
+{
+	assert (0);
+	return;
+}
+//} [KSI] - ~MVC
+
+
 Void TEncSbac::codePPS( TComPPS* pcPPS )
 {
   assert (0);
   return;
 }
+
+//{ [KSI] - MVC
+Void TEncSbac::codePrefix( TComSlice* pcSlice, TEncCfg* pcCfg )
+{
+	assert (0);
+	return;
+}
+//} [KSI] - ~MVC
+
+
+//{ [KSI] - MVC
+Void TEncSbac::codeSliceExtensionHeader( TComSlice* pcSlice, TEncCfg* pcCfg )
+{
+	assert (0);
+	return;
+}
+//} [KSI] - ~MVC
+
 
 Void TEncSbac::codeSliceHeader( TComSlice* pcSlice )
 {

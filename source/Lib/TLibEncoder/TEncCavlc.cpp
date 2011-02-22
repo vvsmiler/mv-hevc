@@ -421,8 +421,9 @@ Void TEncCavlc::codePPS( TComPPS* pcPPS )
 {
 #if HHI_NAL_UNIT_SYNTAX
   // uiFirstByte
+  xWriteCode( 0, 1); //[KSI]
   xWriteCode( NAL_REF_IDC_PRIORITY_HIGHEST, 2);
-  xWriteCode( 0, 1);
+  //[KSI]xWriteCode( 0, 1);
   xWriteCode( NAL_UNIT_PPS, 5);
 #endif
   return;
@@ -432,8 +433,9 @@ Void TEncCavlc::codeSPS( TComSPS* pcSPS )
 {
 #if HHI_NAL_UNIT_SYNTAX
   // uiFirstByte
+  xWriteCode( 0, 1); //[KSI]
   xWriteCode( NAL_REF_IDC_PRIORITY_HIGHEST, 2);
-  xWriteCode( 0, 1);
+  //[KSI]xWriteCode( 0, 1);
   xWriteCode( NAL_UNIT_SPS, 5);
 #endif
   // Structure
@@ -484,8 +486,9 @@ Void TEncCavlc::codeSubsetSPS_MVC( TComSPS* pcSPS )
 {
 #if HHI_NAL_UNIT_SYNTAX
 	// uiFirstByte
+	xWriteCode( 0, 1); //[KSI]
 	xWriteCode( NAL_REF_IDC_PRIORITY_HIGHEST, 2);
-	xWriteCode( 0, 1);
+	//[KSI]xWriteCode( 0, 1);
 	xWriteCode( NAL_UNIT_SUBSET_SPS, 5);
 #endif
 	// Structure
@@ -575,6 +578,7 @@ Void TEncCavlc::codePrefix              ( TComSlice* pcSlice, TEncCfg* pcCfg )
 #if HHI_NAL_UNIT_SYNTAX
 	// here someone can add an appropriated NalRefIdc type 
 	//{ [KSI] - MVC
+	xWriteCode( 0, 1); //[KSI]
 	if ( (pcSlice->getPOC() == 0)&&(pcSlice->getSliceType() == I_SLICE) ) // IDR
 		xWriteCode( NAL_REF_IDC_PRIORITY_HIGHEST, 2 );
 	else if ( pcSlice->getDepth() == 0 )
@@ -586,7 +590,7 @@ Void TEncCavlc::codePrefix              ( TComSlice* pcSlice, TEncCfg* pcCfg )
 	else
 		assert(false);
 	//} [KSI] - ~MVC
-	xWriteCode( 0, 1);
+	//[KSI]xWriteCode( 0, 1);
 	xWriteCode( NAL_UNIT_CODED_SLICE_PREFIX, 5);
 
 	xWriteFlag( 0 ); //svc_extension_flag
@@ -607,6 +611,7 @@ Void  TEncCavlc::codeSliceExtensionHeader( TComSlice* pcSlice, TEncCfg* pcCfg )
 #if HHI_NAL_UNIT_SYNTAX
 	// here someone can add an appropriated NalRefIdc type 
 	//{ [KSI] - MVC
+	xWriteCode( 0, 1); //[KSI]
 	if ( (pcSlice->getPOC() == 0)&&(pcSlice->getSliceType() == I_SLICE) ) // IDR
 		xWriteCode( NAL_REF_IDC_PRIORITY_HIGHEST, 2 );
 	else if ( pcSlice->getDepth() == 0 )
@@ -618,7 +623,7 @@ Void  TEncCavlc::codeSliceExtensionHeader( TComSlice* pcSlice, TEncCfg* pcCfg )
 	else
 		assert(false);
 	//} [KSI] - ~MVC
-	xWriteCode( 0, 1);
+	//[KSI]xWriteCode( 0, 1);
 	xWriteCode( NAL_UNIT_CODED_SLICE_LAYER_EXTENSION, 5);
 
 	xWriteFlag( 0 ); //svc_extension_flag
@@ -686,6 +691,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
 #if HHI_NAL_UNIT_SYNTAX
   // here someone can add an appropriated NalRefIdc type
   //{ [KSI] - MVC
+  xWriteCode( 0, 1); //[KSI]
   if ( (pcSlice->getPOC() == 0)&&(pcSlice->getSliceType() == I_SLICE) ) // IDR
 	  xWriteCode( NAL_REF_IDC_PRIORITY_HIGHEST, 2 );
   else if ( pcSlice->getDepth() == 0 )
@@ -697,7 +703,7 @@ Void TEncCavlc::codeSliceHeader         ( TComSlice* pcSlice )
   else
 	  assert(false);
   //} [KSI] - ~MVC
-  xWriteCode( 0, 1);
+  //[KSI]xWriteCode( 0, 1);
   xWriteCode( NAL_UNIT_CODED_SLICE, 5);
 #endif
   xWriteCode  (pcSlice->getPOC(), 10 );   //  9 == SPS->Log2MaxFrameNum

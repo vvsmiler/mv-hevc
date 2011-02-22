@@ -133,6 +133,9 @@ Void TComBitstream::initParsing ( UInt uiNumBytes )
   m_uiDWordsLeft      = 0;
   
   m_uiBitsLeft        = uiNumBytes << 3;
+  //{ [KSI] - MVC
+  m_uiBitsWritten     = uiNumBytes << 3;
+  //} [KSI] - ~MVC
   
   m_uiDWordsLeft      = m_uiBitsLeft >> 5;
   m_iValidBits        = -32;
