@@ -595,7 +595,7 @@ Void TEncCavlc::codePrefix              ( TComSlice* pcSlice, TEncCfg* pcCfg )
 	xWriteCode( (UInt)pcCfg->getCurrentViewID(), 10 );                                                  //view_id         - u(10)
 	xWriteCode( (UInt)pcSlice->getDepth(), 3 );                                                         //temporal_id     - u(3)
 	xWriteFlag( (UInt)(pcSlice->getPOC() == 0 || pcSlice->getPOC() % pcCfg->getIntraPeriod() == 0) );   //anchor_pic_flag - u(1)
-	xWriteFlag( (UInt)(true) );                                                                         //inter_view_flag - u(1)
+	xWriteFlag( (UInt)pcCfg->getMVC() );                                                                //inter_view_flag - u(1)
 	xWriteFlag( (UInt)(true) );                                                                         //reserved_one_bit- u(1)
 #endif
 }
@@ -627,7 +627,7 @@ Void  TEncCavlc::codeSliceExtensionHeader( TComSlice* pcSlice, TEncCfg* pcCfg )
 	xWriteCode( (UInt)pcCfg->getCurrentViewID(), 10 );                                                  //view_id         - u(10)
 	xWriteCode( (UInt)pcSlice->getDepth(), 3 );                                                         //temporal_id     - u(3)
 	xWriteFlag( (UInt)(pcSlice->getPOC() == 0 || pcSlice->getPOC() % pcCfg->getIntraPeriod() == 0) );   //anchor_pic_flag - u(1)
-	xWriteFlag( (UInt)(true) );                                                                         //inter_view_flag - u(1)
+	xWriteFlag( (UInt)pcCfg->getMVC() );                                                                //inter_view_flag - u(1)
 	xWriteFlag( (UInt)(true) );                                                                         //reserved_one_bit- u(1)
 #endif
 	xWriteCode  (pcSlice->getPOC(), 10 );   //  9 == SPS->Log2MaxFrameNum

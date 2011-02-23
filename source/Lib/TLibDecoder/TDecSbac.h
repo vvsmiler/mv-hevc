@@ -69,7 +69,16 @@ public:
   Void  setMaxAlfCtrlDepth        ( UInt uiMaxAlfCtrlDepth ) { m_uiMaxAlfCtrlDepth = uiMaxAlfCtrlDepth; }
   
   Void  parseSPS                  ( TComSPS* pcSPS         ) {}
+  //{ [KSI] - MVC
+  Void  parseSubsetSPS_MVC        ( TComSPS* pcSPS ) {}
+  //} [KSI] - ~MVC
   Void  parsePPS                  ( TComPPS* pcPPS         ) {}
+  //{ [KSI] - MVC
+  Void  parsePrefix               ( TComSlice*& pcSlice ) {}
+  //} [KSI] - ~MVC
+  //{ [KSI] - MVC
+  Void  parseSliceExtensionHeader ( TComSlice*& pcSlice ) {}
+  //} [KSI] - ~MVC
   Void  parseSliceHeader          ( TComSlice*& rpcSlice   ) {}
   Void  parseTerminatingBit       ( UInt& ruiBit );
   Void  parseMVPIdx               ( TComDataCU* pcCU, Int& riMVPIdx, Int iMVPNum, UInt uiAbsPartIdx, UInt uiDepth, RefPicList eRefList );

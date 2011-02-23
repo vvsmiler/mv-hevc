@@ -62,7 +62,16 @@ public:
   virtual Void  setBitstream          ( TComBitstream* p )  = 0;
   
   virtual Void  parseSPS                  ( TComSPS* pcSPS )                                      = 0;
+  //{ [KSI] - MVC
+  virtual Void  parseSubsetSPS_MVC        ( TComSPS* pcSPS )                                      = 0;
+  //} [KSI] - ~MVC
   virtual Void  parsePPS                  ( TComPPS* pcPPS )                                      = 0;
+  //{ [KSI] - MVC
+  virtual Void  parsePrefix               ( TComSlice*& pcSlice )                                 = 0;
+  //} [KSI] - ~MVC
+  //{ [KSI] - MVC
+  virtual Void  parseSliceExtensionHeader ( TComSlice*& pcSlice )                                 = 0;
+  //} [KSI] - ~MVC
   virtual Void  parseSliceHeader          ( TComSlice*& rpcSlice )                                = 0;
   virtual Void  parseTerminatingBit       ( UInt& ruilsLast )                                     = 0;
   
@@ -131,7 +140,16 @@ public:
   Void    resetEntropy                ( TComSlice* p)           { m_pcEntropyDecoderIf->resetEntropy(p);                    }
   
   Void    decodeSPS                   ( TComSPS* pcSPS     )    { m_pcEntropyDecoderIf->parseSPS(pcSPS);                    }
+  //{ [KSI] - MVC
+  Void    decodeSubsetSPS_MVC         ( TComSPS* pcSPS )        { m_pcEntropyDecoderIf->parseSubsetSPS_MVC(pcSPS);          }
+  //} [KSI] - ~MVC
   Void    decodePPS                   ( TComPPS* pcPPS     )    { m_pcEntropyDecoderIf->parsePPS(pcPPS);                    }
+  //{ [KSI] - MVC
+  Void    decodePrefix                ( TComSlice*& rpcSlice )  { m_pcEntropyDecoderIf->parsePrefix(rpcSlice);              }
+  //} [KSI] - ~MVC
+  //{ [KSI] - MVC
+  Void    decodeSliceExtensionHeader  ( TComSlice*& rpcSlice )  { m_pcEntropyDecoderIf->parseSliceExtensionHeader(rpcSlice);}
+  //} [KSI] - ~MVC
   Void    decodeSliceHeader           ( TComSlice*& rpcSlice )  { m_pcEntropyDecoderIf->parseSliceHeader(rpcSlice);         }
   Void    decodeTerminatingBit        ( UInt& ruiIsLast )       { m_pcEntropyDecoderIf->parseTerminatingBit(ruiIsLast);     }
   

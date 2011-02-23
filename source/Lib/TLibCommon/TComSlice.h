@@ -305,6 +305,15 @@ class TComSlice
   
 private:
   //  Bitstream writing
+  //{ [KSI] - MVC
+  Bool        m_bSvcExtensionFlag;
+  Bool        m_bNonIdrFlag;
+  UInt        m_uiPriorityId;
+  UInt        m_uiViewId;
+  UInt        m_uiTemporalId;
+  Bool        m_bAnchorPicFlag;
+  Bool        m_bInterViewFlag;
+  //} [KSI] - ~MVC
   Int         m_iPOC;
   SliceType   m_eSliceType;
   Int         m_iSliceQp;
@@ -356,6 +365,15 @@ public:
   TComPPS*  getPPS          () { return m_pcPPS; }
   
   SliceType getSliceType    ()                          { return  m_eSliceType;         }
+  //{ [KSI] - MVC
+  Bool      getSvcExtensionFlag () { return m_bSvcExtensionFlag; }
+  Bool      getNonIdrFlag()        { return m_bNonIdrFlag;       }
+  UInt      getPriorityId()        { return m_uiPriorityId;      }
+  UInt      getViewId()            { return m_uiViewId;          }
+  UInt      getTemporalId()        { return m_uiTemporalId;      }
+  Bool      getAnchorPicFlag()     { return m_bAnchorPicFlag;    }
+  Bool      getInterViewFlag()     { return m_bInterViewFlag;    }
+  //} [KSI] - ~MVC
   Int       getPOC          ()                          { return  m_iPOC;           }
   Int       getSliceQp      ()                          { return  m_iSliceQp;           }
   Int       getSliceQpDelta ()                          { return  m_iSliceQpDelta;      }
@@ -377,6 +395,15 @@ public:
   Bool      isRounding()                                        { return m_bRounding; }
 #endif
   
+  //{ [KSI] - MVC
+  Void      setSvcExtensionFlag ( Bool b ) { m_bSvcExtensionFlag = b;  }
+  Void      setNonIdrFlag( Bool b )        { m_bNonIdrFlag       = b;  }
+  Void      setPriorityId( UInt ui )       { m_uiPriorityId      = ui; }
+  Void      setViewId( UInt ui )           { m_uiViewId          = ui; }
+  Void      setTemporalId( UInt ui )       { m_uiTemporalId      = ui; }
+  Void      setAnchorPicFlag( Bool b )     { m_bAnchorPicFlag    = b;  }
+  Void      setInterViewFlag( Bool b )     { m_bInterViewFlag    = b;  }
+  //} [KSI] - ~MVC
   Void      setPOC              ( Int i )                       { m_iPOC              = i;      }
   Void      setSliceType        ( SliceType e )                 { m_eSliceType        = e;      }
   Void      setSliceQp          ( Int i )                       { m_iSliceQp          = i;      }
