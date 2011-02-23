@@ -244,7 +244,7 @@ Void TDecCavlc::parseSubsetSPS_MVC(TComSPS* pcSPS)
 //} [KSI] - ~MVC
 
 //{ [KSI] - MVC
-Void TDecCavlc::parsePrefix      (TComSlice*& rcSlice)
+Void TDecCavlc::parsePrefix      (TComSlice*& rpcSlice)
 {
 	UInt  uiCode;
 #if HHI_NAL_UNIT_SYNTAX
@@ -252,14 +252,16 @@ Void TDecCavlc::parsePrefix      (TComSlice*& rcSlice)
 	xReadCode ( 1, uiCode ); assert( 0 == uiCode); // zero bit
 	xReadCode ( 5, uiCode ); assert( NAL_UNIT_CODED_SLICE_PREFIX == uiCode);//NalUnitType
 
-	xReadCode ( 1, uiCode ); //svc_extension_flag
-	xReadCode ( 1, uiCode ); //non_idr_flag    - u(1)
-	xReadCode ( 6, uiCode ); //priority_id     - u(6)
-	xReadCode (10, uiCode ); //view_id         - u(10)
-	xReadCode ( 3, uiCode ); //temporal_id     - u(3)
-	xReadCode ( 1, uiCode ); //anchor_pic_flag - u(1)
-	xReadCode ( 1, uiCode ); //inter_view_flag - u(1)
-	xReadCode ( 1, uiCode ); //reserved_one_bit- u(1)
+	std::cout << std::endl;
+	xReadCode ( 1, uiCode ); rpcSlice->setSvcExtensionFlag((uiCode == 1)); std::cout << "svc_extension_flag : " << uiCode << std::endl;//svc_extension_flag
+	xReadCode ( 1, uiCode ); rpcSlice->setNonIdrFlag((uiCode == 1));       std::cout << "non_idr_flag       : " << uiCode << std::endl;//non_idr_flag    - u(1)
+	xReadCode ( 6, uiCode ); rpcSlice->setPriorityId(uiCode);              std::cout << "priority_id        : " << uiCode << std::endl;//priority_id     - u(6)
+	xReadCode (10, uiCode ); rpcSlice->setViewId(uiCode);                  std::cout << "view_id            : " << uiCode << std::endl;//view_id         - u(10)
+	xReadCode ( 3, uiCode ); rpcSlice->setTemporalId(uiCode);              std::cout << "temporal_id        : " << uiCode << std::endl;//temporal_id     - u(3)
+	xReadCode ( 1, uiCode ); rpcSlice->setAnchorPicFlag((uiCode == 1));    std::cout << "anchor_pic_flag    : " << uiCode << std::endl;//anchor_pic_flag - u(1)
+	xReadCode ( 1, uiCode ); rpcSlice->setInterViewFlag((uiCode == 1));    std::cout << "inter_view_flag    : " << uiCode << std::endl;//inter_view_flag - u(1)
+	xReadCode ( 1, uiCode );                                               std::cout << "reserved_one_bit   : " << uiCode << std::endl;//reserved_one_bit- u(1)
+	std::cout << std::endl;
 #endif
 	return;
 }
@@ -275,14 +277,16 @@ Void TDecCavlc::parseSliceExtensionHeader ( TComSlice*& rpcSlice )
 	xReadCode ( 1, uiCode ); assert( 0 == uiCode); // zero bit
 	xReadCode ( 5, uiCode ); assert( NAL_UNIT_CODED_SLICE_LAYER_EXTENSION == uiCode);//NalUnitType
 
-	xReadCode ( 1, uiCode ); //svc_extension_flag
-	xReadCode ( 1, uiCode ); //non_idr_flag    - u(1)
-	xReadCode ( 6, uiCode ); //priority_id     - u(6)
-	xReadCode (10, uiCode ); //view_id         - u(10)
-	xReadCode ( 3, uiCode ); //temporal_id     - u(3)
-	xReadCode ( 1, uiCode ); //anchor_pic_flag - u(1)
-	xReadCode ( 1, uiCode ); //inter_view_flag - u(1)
-	xReadCode ( 1, uiCode ); //reserved_one_bit- u(1)
+	std::cout << std::endl;
+	xReadCode ( 1, uiCode ); rpcSlice->setSvcExtensionFlag((uiCode == 1)); std::cout << "svc_extension_flag : " << uiCode << std::endl;//svc_extension_flag
+	xReadCode ( 1, uiCode ); rpcSlice->setNonIdrFlag((uiCode == 1));       std::cout << "non_idr_flag       : " << uiCode << std::endl;//non_idr_flag    - u(1)
+	xReadCode ( 6, uiCode ); rpcSlice->setPriorityId(uiCode);              std::cout << "priority_id        : " << uiCode << std::endl;//priority_id     - u(6)
+	xReadCode (10, uiCode ); rpcSlice->setViewId(uiCode);                  std::cout << "view_id            : " << uiCode << std::endl;//view_id         - u(10)
+	xReadCode ( 3, uiCode ); rpcSlice->setTemporalId(uiCode);              std::cout << "temporal_id        : " << uiCode << std::endl;//temporal_id     - u(3)
+	xReadCode ( 1, uiCode ); rpcSlice->setAnchorPicFlag((uiCode == 1));    std::cout << "anchor_pic_flag    : " << uiCode << std::endl;//anchor_pic_flag - u(1)
+	xReadCode ( 1, uiCode ); rpcSlice->setInterViewFlag((uiCode == 1));    std::cout << "inter_view_flag    : " << uiCode << std::endl;//inter_view_flag - u(1)
+	xReadCode ( 1, uiCode );                                               std::cout << "reserved_one_bit   : " << uiCode << std::endl;//reserved_one_bit- u(1)
+	std::cout << std::endl;
 #endif
 	xReadCode (10, uiCode);  rpcSlice->setPOC              (uiCode);             // 9 == SPS->Log2MaxFrameNum()
 	xReadUvlc (   uiCode);  rpcSlice->setSliceType        ((SliceType)uiCode);

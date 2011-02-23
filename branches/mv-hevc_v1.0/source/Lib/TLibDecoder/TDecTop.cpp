@@ -170,7 +170,12 @@ Void TDecTop::decode (Bool bEos, TComBitstream* pcBitstream, UInt& ruiPOC, TComL
   const NalUnitType eNalUnitType = NalUnitType(pucBuffer[0]&31); 
   const bool bDecodeSPS   = ( NAL_UNIT_SPS == eNalUnitType );
   const bool bDecodePPS   = ( NAL_UNIT_PPS == eNalUnitType );
-  const bool bDecodeSlice = ( NAL_UNIT_CODED_SLICE == eNalUnitType );
+  const bool bDecodeSlice = ( NAL_UNIT_CODED_SLICE == eNalUnitType ) || (NAL_UNIT_CODED_SLICE_PREFIX == eNalUnitType) || (NAL_UNIT_CODED_SLICE_LAYER_EXTENSION == eNalUnitType);
+  //{ [KSI] - MVC
+  const bool bDecodeSubsetSPS              = (NAL_UNIT_SUBSET_SPS == eNalUnitType);
+  const bool bDecodeSlicePrefix            = (NAL_UNIT_CODED_SLICE_PREFIX == eNalUnitType);
+  const bool bDecodeSliceLayerExtension    = (NAL_UNIT_CODED_SLICE_LAYER_EXTENSION == eNalUnitType);
+  //} [KSI] - ~MVC
 #else
   const bool bDecodeSlice = true;
   bool bDecodeSPS   = false;
@@ -193,27 +198,59 @@ Void TDecTop::decode (Bool bEos, TComBitstream* pcBitstream, UInt& ruiPOC, TComL
     m_cLoopFilter.        create( g_uiMaxCUDepth );
     m_uiValidPS |= 1;
   }
+
+  //{ [KSI] - MVC
+  if( bDecodeSubsetSPS )
+  {
+	m_cEntropyDecoder.decodeSubsetSPS_MVC( &m_cSubsetSPS );
+	m_uiValidPS |= 4;
+  }
+  //} [KSI] - ~MVC
   
   if( bDecodePPS )
   {
     m_cEntropyDecoder.decodePPS( &m_cPPS );
     m_uiValidPS |= 2;
   }
-  
+
   if( false == bDecodeSlice )
   {
     return;
   }
-  
+ 
   // make sure we already received both parameter sets
-  assert( 3 == m_uiValidPS );
+  //{ [KSI] - MVC
+  if(bDecodeSliceLayerExtension || bDecodeSlicePrefix) assert( 7 == m_uiValidPS );
+  //} [KSI] - ~MVC
+  else                                                 assert( 3 == m_uiValidPS );
   
   m_apcSlicePilot->initSlice();
   
   //  Read slice header
-  m_apcSlicePilot->setSPS( &m_cSPS );
+  //{ [KSI] - MVC
+  if(bDecodeSliceLayerExtension || bDecodeSlicePrefix) m_apcSlicePilot->setSPS( &m_cSubsetSPS );
+  //} [KSI] - ~MVC
+  else                                                 m_apcSlicePilot->setSPS( &m_cSPS );
+
   m_apcSlicePilot->setPPS( &m_cPPS );
-  m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot);
+
+  //{ [KSI] - MVC
+  if( bDecodeSlicePrefix )
+  {
+	  m_cEntropyDecoder.decodePrefix(m_apcSlicePilot);
+	  return;
+  }
+  //} [KSI] - ~MVC
+
+  //{ [KSI] - MVC
+  if( bDecodeSliceLayerExtension )
+  {
+	  m_cEntropyDecoder.decodeSliceExtensionHeader(m_apcSlicePilot);
+	  return;
+  }
+  //} [KSI] - ~MVC
+  else
+	  m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot);
   
   // Buffer initialize for prediction.
   m_cPrediction.initTempBuff();

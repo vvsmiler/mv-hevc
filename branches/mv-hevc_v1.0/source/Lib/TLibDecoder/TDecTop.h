@@ -62,6 +62,9 @@ private:
   UInt                    m_uiValidPS;
   TComList<TComPic*>      m_cListPic;         //  Dynamic buffer
   TComSPS                 m_cSPS;
+  //{ [KSI] - MVC
+  TComSPS                 m_cSubsetSPS;
+  //} [KSI] - ~MVC
   TComPPS                 m_cPPS;
   TComSlice*              m_apcSlicePilot;
   
