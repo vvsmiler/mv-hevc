@@ -105,10 +105,11 @@ public:
 protected:
   Void  xGetNewPicBuffer             (TComSlice* pcSlice, TComPic*& rpcPic);
   Void  xUpdateGopSize               (TComSlice* pcSlice);
+  //{ [KSI] - MVC
   UInt  xGetViewIndex                (TComSlice* pcSlice);
   Void  xPrepareInterViewPrediction  (TComSlice* pcSlice);
   Void  xSetInterViewRefPicList      (TComSlice* pcSlice);
-  
+  //} [KSI] - ~MVC  
 };// END CLASS DEFINITION TDecTop
 
 

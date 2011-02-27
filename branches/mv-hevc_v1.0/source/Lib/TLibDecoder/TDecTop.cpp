@@ -325,11 +325,9 @@ Void TDecTop::decode (Bool bEos, TComBitstream* pcBitstream, UInt& ruiPOC, TComL
  
   // make sure we already received both parameter sets
   //{ [KSI] - MVC
-  if(m_cSubsetSPS.getMVC())
-	  assert( 7 == m_uiValidPS );
+  if(m_cSubsetSPS.getMVC()) assert( 7 == m_uiValidPS );
   //} [KSI] - ~MVC
-  else
-	  assert( 3 == m_uiValidPS );
+  else                      assert( 3 == m_uiValidPS );
   
   m_apcSlicePilot->initSlice();
   
