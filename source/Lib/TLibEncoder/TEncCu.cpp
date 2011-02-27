@@ -240,8 +240,8 @@ Void TEncCu::compressCU( TComDataCU*& rpcCU )
     
     // first try
     xCompressCU( m_ppcBestCU[0], m_ppcTempCU[0], 0 );
-    
-    // for non-zero residual case
+
+	// for non-zero residual case
     if ( !( m_ppcBestCU[0]->isSkipped( 0 ) && m_ppcBestCU[0]->getDepth( 0 ) == 0 ) )
     {
       // add dQP bits

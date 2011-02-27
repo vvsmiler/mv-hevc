@@ -1987,31 +1987,28 @@ Void TComDataCU::fillMvpCand ( UInt uiPartIdx, UInt uiPartAddr, RefPicList eRefP
   if ( pcCUColocated && !pcCUColocated->isIntra(uiAbsPartAddr) &&
       pcCUColocated->getCUMvField(eColRefPicList)->getRefIdx(uiAbsPartAddr) >= 0 )
   {
-	  if ( pcCUColocated->getSlice() )
-	  {
-		  Int iColPOC = pcCUColocated->getSlice()->getPOC();
-		  Int iColRefPOC = pcCUColocated->getSlice()->getRefPOC(eColRefPicList, pcCUColocated->getCUMvField(eColRefPicList)->getRefIdx(uiAbsPartAddr));
-		  TComMv cColMv = pcCUColocated->getCUMvField(eColRefPicList)->getMv(uiAbsPartAddr);
-
-		  Int iCurrPOC = m_pcSlice->getPOC();
-		  Int iCurrRefPOC = m_pcSlice->getRefPic(eRefPicList, iRefIdx)->getPOC();
-
-		  TComMv cMv;
-		  Int iScale = xGetDistScaleFactor(iCurrPOC, iCurrRefPOC, iColPOC, iColRefPOC);
-
-		  if (iScale == 1024)
-		  {
-			  cMv = cColMv;
-		  }
-		  else
-		  {
-			  cMv = cColMv.scaleMv( iScale );
-		  }
-
-		  clipMv(cMv);
-
-		  pInfo->m_acMvCand[pInfo->iN++] = cMv ;
-	  }
+	Int iColPOC = pcCUColocated->getSlice()->getPOC();
+	Int iColRefPOC = pcCUColocated->getSlice()->getRefPOC(eColRefPicList, pcCUColocated->getCUMvField(eColRefPicList)->getRefIdx(uiAbsPartAddr));
+	TComMv cColMv = pcCUColocated->getCUMvField(eColRefPicList)->getMv(uiAbsPartAddr);
+	
+	Int iCurrPOC = m_pcSlice->getPOC();
+	Int iCurrRefPOC = m_pcSlice->getRefPic(eRefPicList, iRefIdx)->getPOC();
+	
+	TComMv cMv;
+	Int iScale = xGetDistScaleFactor(iCurrPOC, iCurrRefPOC, iColPOC, iColRefPOC);
+	
+	if (iScale == 1024)
+	{
+	  cMv = cColMv;
+	}
+	else
+	{
+	  cMv = cColMv.scaleMv( iScale );
+	}
+	
+	clipMv(cMv);
+	
+	pInfo->m_acMvCand[pInfo->iN++] = cMv ;
   }
 #endif
   // Check No MV Candidate
@@ -2275,8 +2272,10 @@ Int TComDataCU::xGetDistScaleFactor(Int iCurrPOC, Int iCurrRefPOC, Int iColPOC, 
   {
     Int iTDB      = Clip3( -128, 127, iDiffPocB );
     Int iTDD      = Clip3( -128, 127, iDiffPocD );
-	iTDB = iTDB == 0 ? 1 : iTDB;
-	iTDD = iTDD == 0 ? 1 : iTDD;
+	//{ [KSI] - MVC
+	iTDB = iTDB == 0 ? 2 : iTDB;
+	iTDD = iTDD == 0 ? 2 : iTDD;
+	//} [KSI] - ~MVC
     Int iX        = (0x4000 + abs(iTDD/2)) / iTDD;
     Int iScale    = Clip3( -1024, 1023, (iTDB * iX + 32) >> 6 );
     return iScale;

@@ -117,7 +117,7 @@ Void TDecGop::decompressGop (Bool bEos, TComBitstream* pcBitstream, TComPic*& rp
     m_pcAdaptiveLoopFilter->allocALFParam(&cAlfParam);
     m_pcEntropyDecoder->decodeAlfParam( &cAlfParam );
   }
-  
+
   m_pcSliceDecoder->decompressSlice(pcBitstream, rpcPic);
   
   // deblocking filter
@@ -132,6 +132,15 @@ Void TDecGop::decompressGop (Bool bEos, TComBitstream* pcBitstream, TComPic*& rp
   }
   
   //-- For time output for each slice
+  std::cout << "svc_extension_flag : " << pcSlice->getSvcExtensionFlag() << std::endl;//svc_extension_flag
+  std::cout << "non_idr_flag       : " << pcSlice->getNonIdrFlag()       << std::endl;//non_idr_flag    - u(1)
+  std::cout << "priority_id        : " << pcSlice->getPriorityId()       << std::endl;//priority_id     - u(6)
+  std::cout << "view_id            : " << pcSlice->getViewId()           << std::endl;//view_id         - u(10)
+  std::cout << "temporal_id        : " << pcSlice->getTemporalId()       << std::endl;//temporal_id     - u(3)
+  std::cout << "anchor_pic_flag    : " << pcSlice->getAnchorPicFlag()    << std::endl;//anchor_pic_flag - u(1)
+  std::cout << "inter_view_flag    : " << pcSlice->getInterViewFlag()    << std::endl;//inter_view_flag - u(1)
+  std::cout << "reserved_one_bit   : 1";                              // << std::endl;//reserved_one_bit- u(1)
+
   printf("\nPOC %4d ( %c-SLICE, QP%3d ) ",
          pcSlice->getPOC(),
          pcSlice->isIntra() ? 'I' : pcSlice->isInterP() ? 'P' : 'B',

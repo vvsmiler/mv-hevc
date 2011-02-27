@@ -41,13 +41,13 @@ Void TComMultiView::closeMultiView( Void )
 			}
 		}
 
-		delete m_acListMultiView;
+		delete [] m_acListMultiView;
 		m_acListMultiView = NULL;
 		m_uiNumViews = 0;
 	}
 }
 
-Void TComMultiView::addMultiViewPicture( UInt uiViewIndex, TComPicYuv* pcPic, Int iPOC )
+Void TComMultiView::addMultiViewPicture( UInt uiViewIndex, TComPicYuv* pcPic, Int iPOC, Bool bBitIncrement )
 {
 	TComPic* pcPicFromList = xGetBuffer(uiViewIndex);
 	if ( (pcPicFromList != NULL) && (pcPic != NULL) )
@@ -56,10 +56,12 @@ Void TComMultiView::addMultiViewPicture( UInt uiViewIndex, TComPicYuv* pcPic, In
 		pcPicFromList->getSlice()->setPOC(iPOC);
 		pcPicFromList->setReconMark(true);
 		pcPicFromList->getPicYuvRec()->setBorderExtension(false);
-		if ( g_uiBitIncrement )
+		if ( g_uiBitIncrement && bBitIncrement )
 		{
 			xScalePic( pcPicFromList );
 		}
+		for ( Int iAddr = 0; iAddr < pcPicFromList->getPicSym()->getNumberOfCUsInFrame(); iAddr++ )
+			pcPicFromList->getCU(iAddr)->initCU(pcPicFromList, iAddr);
 	}
 }
 
