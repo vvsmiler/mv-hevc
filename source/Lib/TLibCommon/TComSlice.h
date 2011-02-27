@@ -216,7 +216,11 @@ public:
   Void      setNumAnchorRefsL0    ( UInt pos, UInt val )
   {
 	  assert(pos <= m_uiNumViewsMinusOne);
-	  if ( m_auiNumAnchorRefsL0 == NULL )    m_auiNumAnchorRefsL0 = new UInt[getNumViewsMinusOne()+1];
+	  if ( m_auiNumAnchorRefsL0 == NULL )
+	  {
+		  m_auiNumAnchorRefsL0 = new UInt[getNumViewsMinusOne()+1];
+		  memset(m_auiNumAnchorRefsL0, 0, sizeof(UInt)*(getNumViewsMinusOne()+1));
+	  }
 	  m_auiNumAnchorRefsL0[pos] = val;
 
 	  if ( m_aauiAnchorRefL0 == NULL )
@@ -229,7 +233,11 @@ public:
   Void      setNumAnchorRefsL1    ( UInt pos, UInt val )
   {
 	  assert(pos <= m_uiNumViewsMinusOne);
-	  if ( m_auiNumAnchorRefsL1 == NULL )    m_auiNumAnchorRefsL1 = new UInt[getNumViewsMinusOne()+1];
+	  if ( m_auiNumAnchorRefsL1 == NULL )
+	  {
+		  m_auiNumAnchorRefsL1 = new UInt[getNumViewsMinusOne()+1];
+		  memset(m_auiNumAnchorRefsL1, 0, sizeof(UInt)*(getNumViewsMinusOne()+1));
+	  }
 	  m_auiNumAnchorRefsL1[pos] = val;
 
 	  if ( m_aauiAnchorRefL1 == NULL )
@@ -254,7 +262,11 @@ public:
   Void      setNumNonAnchorRefsL0    ( UInt pos, UInt val )
   {
 	  assert(pos <= m_uiNumViewsMinusOne);
-	  if ( m_auiNumNonAnchorRefsL0 == NULL )    m_auiNumNonAnchorRefsL0 = new UInt[getNumViewsMinusOne()+1];
+	  if ( m_auiNumNonAnchorRefsL0 == NULL )
+	  {
+		  m_auiNumNonAnchorRefsL0 = new UInt[getNumViewsMinusOne()+1];
+		  memset(m_auiNumNonAnchorRefsL0, 0, sizeof(UInt)*(getNumViewsMinusOne()+1));
+	  }
 	  m_auiNumNonAnchorRefsL0[pos] = val;
 
 	  if ( m_aauiNonAnchorRefL0 == NULL )
@@ -267,7 +279,11 @@ public:
   Void      setNumNonAnchorRefsL1    ( UInt pos, UInt val )
   {
 	  assert(pos <= m_uiNumViewsMinusOne);
-	  if ( m_auiNumNonAnchorRefsL1 == NULL )    m_auiNumNonAnchorRefsL1 = new UInt[getNumViewsMinusOne()+1];
+	  if ( m_auiNumNonAnchorRefsL1 == NULL )
+	  {
+		  m_auiNumNonAnchorRefsL1 = new UInt[getNumViewsMinusOne()+1];
+		  memset(m_auiNumNonAnchorRefsL1, 0, sizeof(UInt)*(getNumViewsMinusOne()+1));
+	  }
 	  m_auiNumNonAnchorRefsL1[pos] = val;
 
 	  if ( m_aauiNonAnchorRefL1 == NULL )

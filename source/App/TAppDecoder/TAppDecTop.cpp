@@ -82,9 +82,14 @@ Void TAppDecTop::destroy()
   }
 
   //{ [KSI] - MVC
-  if (m_acTVideoIOYuvReconFile != NULL)
+  if ( m_acTVideoIOYuvReconFile != NULL )
   {
 	  delete [] m_acTVideoIOYuvReconFile;
+  }
+
+  if ( m_aiPOCLastDisplay != NULL )
+  {
+	  delete [] m_aiPOCLastDisplay;
   }
   //} [KSI] - ~MVC
 }
@@ -170,13 +175,6 @@ Void TAppDecTop::xCreateDecLib()
 {
   // open bitstream file
   m_cTVideoIOBitstreamFile.openBits( m_pchBitstreamFile, false);  // read mode
-
-  //{ [KSI] - MVC
-  //if ( m_pchReconFile )
-  //{
-  //  m_cTVideoIOYuvReconFile.open( m_pchReconFile, true );         // write mode
-  //}
-  //} [KSI] - ~MVC
   
   // create decoder class
   m_cTDecTop.create();
@@ -186,13 +184,6 @@ Void TAppDecTop::xDestroyDecLib()
 {
   // close bitstream file
   m_cTVideoIOBitstreamFile.closeBits();
-
-  //{ [KSI] - MVC
-  //if ( m_pchReconFile )
-  //{
-  //  m_cTVideoIOYuvReconFile. close();
-  //}
-  //} [KSI] - ~MVC
   
   // destroy decoder class
   m_cTDecTop.destroy();
