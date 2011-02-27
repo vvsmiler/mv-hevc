@@ -41,6 +41,7 @@
 #include "../TLibCommon/TComPicYuv.h"
 #include "../TLibCommon/TComPic.h"
 #include "../TLibCommon/TComTrQuant.h"
+#include "../TLibCommon/TComMultiView.h"
 
 #include "TDecGop.h"
 #include "TDecEntropy.h"
@@ -60,10 +61,13 @@ private:
   int                     m_iMaxRefPicNum;
   
   UInt                    m_uiValidPS;
-  TComList<TComPic*>      m_cListPic;         //  Dynamic buffer
+  //{ [KSI] - MVC
+  TComList<TComPic*>*     m_acListPic;         //  Dynamic buffer
+  //} [KSI] - ~MVC
   TComSPS                 m_cSPS;
   //{ [KSI] - MVC
   TComSPS                 m_cSubsetSPS;
+  TComMultiView           m_cMultiView;
   //} [KSI] - ~MVC
   TComPPS                 m_cPPS;
   TComSlice*              m_apcSlicePilot;
@@ -92,10 +96,18 @@ public:
   Void  decode ( Bool bEos, TComBitstream* pcBitstream, UInt& ruiPOC, TComList<TComPic*>*& rpcListPic );
   
   Void  deletePicBuffer();
-  
+
+  //{ [KSI] - MVC
+public:
+	TComSPS& getSPS(void) { return m_cSubsetSPS.getMVC() ? m_cSubsetSPS : m_cSPS; }
+  //} [KSI - ~MVC
+
 protected:
-  Void  xGetNewPicBuffer  (TComSlice* pcSlice, TComPic*& rpcPic);
-  Void  xUpdateGopSize    (TComSlice* pcSlice);
+  Void  xGetNewPicBuffer             (TComSlice* pcSlice, TComPic*& rpcPic);
+  Void  xUpdateGopSize               (TComSlice* pcSlice);
+  UInt  xGetViewIndex                (TComSlice* pcSlice);
+  Void  xPrepareInterViewPrediction  (TComSlice* pcSlice);
+  Void  xSetInterViewRefPicList      (TComSlice* pcSlice);
   
 };// END CLASS DEFINITION TDecTop
 

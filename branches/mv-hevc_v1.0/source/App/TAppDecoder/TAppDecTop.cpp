@@ -54,9 +54,9 @@
 // ====================================================================================================================
 
 TAppDecTop::TAppDecTop()
+:m_acTVideoIOYuvReconFile(NULL), m_aiPOCLastDisplay(NULL)
 {
   ::memset (m_abDecFlag, 0, sizeof (m_abDecFlag));
-  m_iPOCLastDisplay  = -1;
 }
 
 Void TAppDecTop::create()
@@ -80,6 +80,13 @@ Void TAppDecTop::destroy()
     delete m_apcBitstream;
     m_apcBitstream = NULL;
   }
+
+  //{ [KSI] - MVC
+  if (m_acTVideoIOYuvReconFile != NULL)
+  {
+	  delete [] m_acTVideoIOYuvReconFile;
+  }
+  //} [KSI] - ~MVC
 }
 
 // ====================================================================================================================
@@ -120,7 +127,24 @@ Void TAppDecTop::decode()
     
     if( pcListPic )
     {
-      // write reconstuction to file
+	  if (m_acTVideoIOYuvReconFile == NULL)
+	  {
+		  UInt uiNumOfViews = (*pcListPic->begin())->getPicSym()->getSlice()->getSPS()->getNumViewsMinusOne() + 1;
+		  m_acTVideoIOYuvReconFile = new TVideoIOYuv[uiNumOfViews];
+		  m_aiPOCLastDisplay = new Int[uiNumOfViews];
+		  char pos[10];
+		  for ( UInt i = 0 ; i < uiNumOfViews; i++ )
+		  {
+			  std::string strFileName = m_pchReconFile;
+			  strFileName += "_";
+			  strFileName += _itoa((*pcListPic->begin())->getPicSym()->getSlice()->getSPS()->getViewOrder()[i], pos, 10);
+			  strFileName += ".yuv";
+			  m_acTVideoIOYuvReconFile[i].open(const_cast<char*>(strFileName.c_str()), true);
+
+			  m_aiPOCLastDisplay[i] = -1;
+		  }
+	  }
+      // write reconstruction to file
       xWriteOutput( pcListPic, bAlloc );
     }
   }
@@ -146,11 +170,13 @@ Void TAppDecTop::xCreateDecLib()
 {
   // open bitstream file
   m_cTVideoIOBitstreamFile.openBits( m_pchBitstreamFile, false);  // read mode
-  
-  if ( m_pchReconFile )
-  {
-    m_cTVideoIOYuvReconFile.open( m_pchReconFile, true );         // write mode
-  }
+
+  //{ [KSI] - MVC
+  //if ( m_pchReconFile )
+  //{
+  //  m_cTVideoIOYuvReconFile.open( m_pchReconFile, true );         // write mode
+  //}
+  //} [KSI] - ~MVC
   
   // create decoder class
   m_cTDecTop.create();
@@ -160,11 +186,13 @@ Void TAppDecTop::xDestroyDecLib()
 {
   // close bitstream file
   m_cTVideoIOBitstreamFile.closeBits();
-  
-  if ( m_pchReconFile )
-  {
-    m_cTVideoIOYuvReconFile. close();
-  }
+
+  //{ [KSI] - MVC
+  //if ( m_pchReconFile )
+  //{
+  //  m_cTVideoIOYuvReconFile. close();
+  //}
+  //} [KSI] - ~MVC
   
   // destroy decoder class
   m_cTDecTop.destroy();
@@ -183,12 +211,21 @@ Void TAppDecTop::xInitDecLib()
 Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, Bool& rbAlloc )
 {
   TComList<TComPic*>::iterator iterPic   = pcListPic->begin();
+
+  //{ [KSI] - MVC
+  UInt uiViewIndex;
+  for ( uiViewIndex = 0; uiViewIndex <= (*iterPic)->getPicSym()->getSlice()->getSPS()->getNumViewsMinusOne(); uiViewIndex++ )
+  {
+	  if ( (*iterPic)->getPicSym()->getSlice()->getSPS()->getViewOrder()[uiViewIndex] == (*iterPic)->getPicSym()->getSlice()->getViewId() )
+		  break;
+  }
+  //} [KSI] - ~MVC
   
   while (iterPic != pcListPic->end())
   {
     TComPic* pcPic = *(iterPic);
     
-    if ( pcPic->getReconMark() && pcPic->getPOC() == (m_iPOCLastDisplay + 1) )
+    if ( pcPic->getReconMark() && pcPic->getPOC() == (m_aiPOCLastDisplay[uiViewIndex] + 1) )
     {
       // descaling case: IBDI
       if ( g_uiBitIncrement )
@@ -212,7 +249,7 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, Bool& rbAlloc )
         // write to file
         if ( m_pchReconFile )
         {
-          m_cTVideoIOYuvReconFile.write( pcPicD, pcPic->getSlice()->getSPS()->getPad() );
+          (m_acTVideoIOYuvReconFile+uiViewIndex)->write( pcPicD, pcPic->getSlice()->getSPS()->getPad() );
         }
       }
       // normal case
@@ -221,12 +258,12 @@ Void TAppDecTop::xWriteOutput( TComList<TComPic*>* pcListPic, Bool& rbAlloc )
         // write to file
         if ( m_pchReconFile )
         {
-          m_cTVideoIOYuvReconFile.write( pcPic->getPicYuvRec(), pcPic->getSlice()->getSPS()->getPad() );
+          (m_acTVideoIOYuvReconFile+uiViewIndex)->write( pcPic->getPicYuvRec(), pcPic->getSlice()->getSPS()->getPad() );
         }
       }
       
       // update POC of display order
-      m_iPOCLastDisplay = pcPic->getPOC();
+      m_aiPOCLastDisplay[uiViewIndex] = pcPic->getPOC();
       
       // erase non-referenced picture in the reference picture list after display
       if ( !pcPic->getSlice()->isReferenced() && pcPic->getReconMark() == true )

@@ -206,32 +206,36 @@ public:
   Void      setViewOrder          ( UInt pos, UInt val )
   {
 	  assert(pos <= m_uiNumViewsMinusOne);
-	  if ( m_auiViewOrder == NULL ) m_auiViewOrder = new UInt[getNumViewsMinusOne()];
+	  if ( m_auiViewOrder == NULL )
+	  {
+		  m_auiViewOrder = new UInt[getNumViewsMinusOne()+1];
+		  memset(m_auiViewOrder, NULL, sizeof(UInt*)*(getNumViewsMinusOne()+1));
+	  }
 	  m_auiViewOrder[pos] = val;
   }
   Void      setNumAnchorRefsL0    ( UInt pos, UInt val )
   {
 	  assert(pos <= m_uiNumViewsMinusOne);
-	  if ( m_auiNumAnchorRefsL0 == NULL )    m_auiNumAnchorRefsL0 = new UInt[getNumViewsMinusOne()];
+	  if ( m_auiNumAnchorRefsL0 == NULL )    m_auiNumAnchorRefsL0 = new UInt[getNumViewsMinusOne()+1];
 	  m_auiNumAnchorRefsL0[pos] = val;
 
 	  if ( m_aauiAnchorRefL0 == NULL )
 	  {
-		  m_aauiAnchorRefL0 = new UInt*[getNumViewsMinusOne()];
-		  memset(m_aauiAnchorRefL0, NULL, sizeof(UInt*)*getNumViewsMinusOne());
+		  m_aauiAnchorRefL0 = new UInt*[getNumViewsMinusOne()+1];
+		  memset(m_aauiAnchorRefL0, NULL, sizeof(UInt*)*(getNumViewsMinusOne()+1));
 	  }
 	  if ( m_aauiAnchorRefL0[pos] == NULL )  m_aauiAnchorRefL0[pos] = new UInt[val];
   }
   Void      setNumAnchorRefsL1    ( UInt pos, UInt val )
   {
 	  assert(pos <= m_uiNumViewsMinusOne);
-	  if ( m_auiNumAnchorRefsL1 == NULL )    m_auiNumAnchorRefsL1 = new UInt[getNumViewsMinusOne()];
+	  if ( m_auiNumAnchorRefsL1 == NULL )    m_auiNumAnchorRefsL1 = new UInt[getNumViewsMinusOne()+1];
 	  m_auiNumAnchorRefsL1[pos] = val;
 
 	  if ( m_aauiAnchorRefL1 == NULL )
 	  {
-		  m_aauiAnchorRefL1 = new UInt*[getNumViewsMinusOne()];
-		  memset(m_aauiAnchorRefL1, NULL, sizeof(UInt*)*getNumViewsMinusOne());
+		  m_aauiAnchorRefL1 = new UInt*[getNumViewsMinusOne()+1];
+		  memset(m_aauiAnchorRefL1, NULL, sizeof(UInt*)*(getNumViewsMinusOne()+1));
 	  }
 	  if ( m_aauiAnchorRefL1[pos] == NULL )  m_aauiAnchorRefL1[pos] = new UInt[val];
   }
@@ -250,26 +254,26 @@ public:
   Void      setNumNonAnchorRefsL0    ( UInt pos, UInt val )
   {
 	  assert(pos <= m_uiNumViewsMinusOne);
-	  if ( m_auiNumNonAnchorRefsL0 == NULL )    m_auiNumNonAnchorRefsL0 = new UInt[getNumViewsMinusOne()];
+	  if ( m_auiNumNonAnchorRefsL0 == NULL )    m_auiNumNonAnchorRefsL0 = new UInt[getNumViewsMinusOne()+1];
 	  m_auiNumNonAnchorRefsL0[pos] = val;
 
 	  if ( m_aauiNonAnchorRefL0 == NULL )
 	  {
-		  m_aauiNonAnchorRefL0 = new UInt*[getNumViewsMinusOne()];
-		  memset(m_aauiNonAnchorRefL0, NULL, sizeof(UInt*)*getNumViewsMinusOne());
+		  m_aauiNonAnchorRefL0 = new UInt*[getNumViewsMinusOne()+1];
+		  memset(m_aauiNonAnchorRefL0, NULL, sizeof(UInt*)*(getNumViewsMinusOne()+1));
 	  }
 	  if ( m_aauiNonAnchorRefL0[pos] == NULL )  m_aauiNonAnchorRefL0[pos] = new UInt[val];
   }
   Void      setNumNonAnchorRefsL1    ( UInt pos, UInt val )
   {
 	  assert(pos <= m_uiNumViewsMinusOne);
-	  if ( m_auiNumNonAnchorRefsL1 == NULL )    m_auiNumNonAnchorRefsL1 = new UInt[getNumViewsMinusOne()];
+	  if ( m_auiNumNonAnchorRefsL1 == NULL )    m_auiNumNonAnchorRefsL1 = new UInt[getNumViewsMinusOne()+1];
 	  m_auiNumNonAnchorRefsL1[pos] = val;
 
 	  if ( m_aauiNonAnchorRefL1 == NULL )
 	  {
-		  m_aauiNonAnchorRefL1 = new UInt*[getNumViewsMinusOne()];
-		  memset(m_aauiNonAnchorRefL1, NULL, sizeof(UInt*)*getNumViewsMinusOne());
+		  m_aauiNonAnchorRefL1 = new UInt*[getNumViewsMinusOne()+1];
+		  memset(m_aauiNonAnchorRefL1, NULL, sizeof(UInt*)*(getNumViewsMinusOne()+1));
 	  }
 	  if ( m_aauiNonAnchorRefL1[pos] == NULL )  m_aauiNonAnchorRefL1[pos] = new UInt[val];
   }

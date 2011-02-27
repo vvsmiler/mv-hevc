@@ -42,10 +42,11 @@ public:
 	TComMultiView( Void );
 	~TComMultiView( Void );
 public:
-	Void openMultiView( UInt uiNumViews, Int iGOPSize, Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth );
-	Void closeMultiView( Void );
-	Void addMultiViewPicture( UInt uiViewIndex, TComPicYuv* pcPic, Int iPOC );
-	TComPic* getMultiViewPicture( UInt uiViewIndex, UInt uiPOC );
+	Void                openMultiView( UInt uiNumViews, Int iGOPSize, Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth );
+	Void                closeMultiView( Void );
+	Void                addMultiViewPicture( UInt uiViewIndex, TComPicYuv* pcPic, Int iPOC, Bool bBitIncrement = true );
+	TComPic*            getMultiViewPicture( UInt uiViewIndex, UInt uiPOC );
+	Void                setGOPSize( Int iGOPSize ) { m_iGOPSize = iGOPSize; }
 protected:
 	TComPic* xGetBuffer( UInt uiViewIndex );
 	Void xScalePic( TComPic* pcPic );

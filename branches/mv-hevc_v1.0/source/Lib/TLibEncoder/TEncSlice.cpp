@@ -496,11 +496,11 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
   {
     // set QP
     m_pcCuEncoder->setQpLast( rpcPic->getSlice()->getSliceQp() );
-    
+
     // initialize CU encoder
     TComDataCU*& pcCU = rpcPic->getCU( uiCUAddr );
     pcCU->initCU( rpcPic, uiCUAddr );
-    
+
     // if RD based on SBAC is used
     if( m_pcCfg->getUseSBACRD() )
     {
@@ -510,7 +510,7 @@ Void TEncSlice::compressSlice( TComPic*& rpcPic )
       
       // run CU encoder
       m_pcCuEncoder->compressCU( pcCU );
-      
+     
       // restore entropy coder to an initial stage
       m_pcEntropyCoder->setEntropyCoder ( m_pppcRDSbacCoder[0][CI_CURR_BEST], rpcPic->getSlice() );
       m_pcEntropyCoder->setBitstream    ( m_pcBitCounter );

@@ -41,6 +41,9 @@ TDecTop::TDecTop()
   m_bGopSizeSet   = false;
   m_iMaxRefPicNum = 0;
   m_uiValidPS = 0;
+  //{ [KSI] - MVC
+  m_acListPic = NULL;
+  //} [KSI] - ~MVC
 #if ENC_DEC_TRACE
   g_hTrace = fopen( "TraceDec.txt", "wb" );
   g_bJustDoIt = g_bEncDecTraceDisable;
@@ -69,6 +72,10 @@ Void TDecTop::destroy()
   m_apcSlicePilot = NULL;
   
   m_cSliceDecoder.destroy();
+
+  //{ [KSI] - MVC
+  if ( m_acListPic != NULL ) delete [] m_acListPic;
+  //} [KSI] - ~MVC
 }
 
 Void TDecTop::init()
@@ -83,18 +90,23 @@ Void TDecTop::init()
 
 Void TDecTop::deletePicBuffer ( )
 {
-  TComList<TComPic*>::iterator  iterPic   = m_cListPic.begin();
-  Int iSize = Int( m_cListPic.size() );
-  
-  for (Int i = 0; i < iSize; i++ )
+  //{ [KSI] - MVC
+  for ( UInt idx = 0; idx <= m_cSubsetSPS.getNumViewsMinusOne(); idx++ )
   {
-    TComPic* pcPic = *(iterPic++);
-    pcPic->destroy();
-    
-    delete pcPic;
-    pcPic = NULL;
+    TComList<TComPic*>::iterator  iterPic   = m_acListPic[idx].begin();
+	Int iSize = Int( m_acListPic[idx].size() );
+	
+	for (Int i = 0; i < iSize; i++ )
+	{
+	  TComPic* pcPic = *(iterPic++);
+	  pcPic->destroy();
+	  
+	  delete pcPic;
+	  pcPic = NULL;
+    }
   }
-  
+  //} [KSI] - ~MVC
+
   // destroy ALF temporary buffers
   m_cAdaptiveLoopFilter.destroy();
   
@@ -106,34 +118,125 @@ Void TDecTop::deletePicBuffer ( )
 
 Void TDecTop::xUpdateGopSize (TComSlice* pcSlice)
 {
-  if ( !pcSlice->isIntra() && !m_bGopSizeSet)
+  if ( (pcSlice->getPOC()!=0) && pcSlice->isIntra() && !m_bGopSizeSet)
   {
     m_iGopSize    = pcSlice->getPOC();
     m_bGopSizeSet = true;
     
     m_cGopDecoder.setGopSize(m_iGopSize);
+
+	//{ [KSI] - MVC
+	m_cMultiView.setGOPSize(m_iGopSize);
+	//}
   }
 }
+
+//{ [KSI] - MVC
+UInt TDecTop::xGetViewIndex(TComSlice* pcSlice)
+{
+	UInt i;
+	for ( i = 0; i <= pcSlice->getSPS()->getNumViewsMinusOne(); i++ )
+	{
+		if ( pcSlice->getSPS()->getViewOrder()[i] == pcSlice->getViewId() )
+			break;
+	}
+	return i;
+}
+//} [KSI] - ~MVC
+
+//{ [KSI] - MVC
+Void TDecTop::xPrepareInterViewPrediction(TComSlice* pcSlice)
+{
+	if ( pcSlice->getSPS()->getMVC() && pcSlice->getInterViewFlag() )
+	{
+		UInt uiViewIndex = xGetViewIndex(pcSlice);
+		if ( pcSlice->getAnchorPicFlag() )
+		{
+			pcSlice->setNumRefIdx(REF_PIC_LIST_0, (pcSlice->getNumRefIdx(REF_PIC_LIST_0) - pcSlice->getSPS()->getNumAnchorRefsL0()[uiViewIndex]));
+			assert(pcSlice->getNumRefIdx(REF_PIC_LIST_0) >= 0);
+			pcSlice->setNumRefIdx(REF_PIC_LIST_1, (pcSlice->getNumRefIdx(REF_PIC_LIST_1) - pcSlice->getSPS()->getNumAnchorRefsL1()[uiViewIndex]));
+			assert(pcSlice->getNumRefIdx(REF_PIC_LIST_1) >= 0);
+		}
+		else
+		{
+			pcSlice->setNumRefIdx(REF_PIC_LIST_0, (pcSlice->getNumRefIdx(REF_PIC_LIST_0) - pcSlice->getSPS()->getNumNonAnchorRefsL0()[uiViewIndex]));
+			assert(pcSlice->getNumRefIdx(REF_PIC_LIST_0) >= 0);
+			pcSlice->setNumRefIdx(REF_PIC_LIST_1, (pcSlice->getNumRefIdx(REF_PIC_LIST_1) - pcSlice->getSPS()->getNumNonAnchorRefsL1()[uiViewIndex]));
+			assert(pcSlice->getNumRefIdx(REF_PIC_LIST_1) >= 0);
+		}
+	}
+}
+//} [KSI] - ~MVC
+
+//{ [KSI] - MVC
+Void TDecTop::xSetInterViewRefPicList(TComSlice* pcSlice)
+{
+	if ( pcSlice->getSPS()->getMVC() && pcSlice->getInterViewFlag() )
+	{
+		UInt uiViewIndex = xGetViewIndex(pcSlice);
+		UInt uiNumRefsL0 = pcSlice->getAnchorPicFlag() ? pcSlice->getSPS()->getNumAnchorRefsL0()[uiViewIndex] : pcSlice->getSPS()->getNumNonAnchorRefsL0()[uiViewIndex];
+		UInt uiNumRefsL1 = pcSlice->getAnchorPicFlag() ? pcSlice->getSPS()->getNumAnchorRefsL1()[uiViewIndex] : pcSlice->getSPS()->getNumNonAnchorRefsL1()[uiViewIndex];
+
+		if ( pcSlice->getAnchorPicFlag() )
+		{
+			if ( pcSlice->getNumRefIdx(REF_PIC_LIST_0) != 0 ) pcSlice->setNumRefIdx(REF_PIC_LIST_0, 0);
+			if ( pcSlice->getNumRefIdx(REF_PIC_LIST_1) != 0 ) pcSlice->setNumRefIdx(REF_PIC_LIST_1, 0);
+		}
+
+		for ( UInt j = 0; j < uiNumRefsL0; j++ )
+		{
+			UInt idx;
+			for ( idx = 0; idx <= pcSlice->getSPS()->getNumViewsMinusOne(); idx++ )
+			{
+				UInt uiRefViewID = pcSlice->getAnchorPicFlag() ? pcSlice->getSPS()->getAnchorRefL0()[uiViewIndex][j] : pcSlice->getSPS()->getNonAnchorRefL0()[uiViewIndex][j];
+				if ( pcSlice->getSPS()->getViewOrder()[idx] == uiRefViewID )
+					break;
+			}
+
+			pcSlice->setRefPic(m_cMultiView.getMultiViewPicture(idx, pcSlice->getPOC()), REF_PIC_LIST_0, pcSlice->getNumRefIdx(REF_PIC_LIST_0));
+			pcSlice->setNumRefIdx(REF_PIC_LIST_0, pcSlice->getNumRefIdx(REF_PIC_LIST_0)+1);
+		}
+
+		for ( UInt j = 0; j < uiNumRefsL1; j++ )
+		{
+			UInt idx;
+			for ( idx = 0; idx <= pcSlice->getSPS()->getNumViewsMinusOne(); idx++ )
+			{
+				UInt uiRefViewID = pcSlice->getAnchorPicFlag() ? pcSlice->getSPS()->getAnchorRefL1()[uiViewIndex][j] : pcSlice->getSPS()->getNonAnchorRefL1()[uiViewIndex][j];
+				if ( pcSlice->getSPS()->getViewOrder()[idx] == uiRefViewID )
+					break;
+			}
+
+			pcSlice->setRefPic(m_cMultiView.getMultiViewPicture(idx, pcSlice->getPOC()), REF_PIC_LIST_1, pcSlice->getNumRefIdx(REF_PIC_LIST_1));
+			pcSlice->setNumRefIdx(REF_PIC_LIST_1, pcSlice->getNumRefIdx(REF_PIC_LIST_1)+1);
+		}
+
+	}
+}
+//} [KSI] ~MVC
 
 Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
 {
   xUpdateGopSize(pcSlice);
-  
+
+  //{ [KSI] - MVC
+  UInt uiViewIndex = xGetViewIndex(pcSlice);
+  //} [KSI] - ~MVC
   m_iMaxRefPicNum = Max(m_iMaxRefPicNum, Max(Max(2, pcSlice->getNumRefIdx(REF_PIC_LIST_0)+1), m_iGopSize/2 + 2 + pcSlice->getNumRefIdx(REF_PIC_LIST_0)));
   
-  if (m_cListPic.size() < (UInt)m_iMaxRefPicNum)
+  if (m_acListPic[uiViewIndex].size() < (UInt)m_iMaxRefPicNum)
   {
     rpcPic = new TComPic;
     
     rpcPic->create ( pcSlice->getSPS()->getWidth(), pcSlice->getSPS()->getHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth, true);
-    m_cListPic.pushBack( rpcPic );
+    m_acListPic[uiViewIndex].pushBack( rpcPic );
     
     return;
   }
   
   Bool bBufferIsAvailable = false;
-  TComList<TComPic*>::iterator  iterPic   = m_cListPic.begin();
-  while (iterPic != m_cListPic.end())
+  TComList<TComPic*>::iterator  iterPic   = m_acListPic[uiViewIndex].begin();
+  while (iterPic != m_acListPic[uiViewIndex].end())
   {
     rpcPic = *(iterPic++);
     if ( rpcPic->getReconMark() == false )
@@ -145,8 +248,8 @@ Void TDecTop::xGetNewPicBuffer ( TComSlice* pcSlice, TComPic*& rpcPic )
   
   if ( !bBufferIsAvailable )
   {
-    pcSlice->sortPicList(m_cListPic);
-    iterPic = m_cListPic.begin();
+    pcSlice->sortPicList(m_acListPic[uiViewIndex]);
+    iterPic = m_acListPic[uiViewIndex].begin();
     rpcPic = *(iterPic);
     rpcPic->setReconMark(false);
     
@@ -203,6 +306,8 @@ Void TDecTop::decode (Bool bEos, TComBitstream* pcBitstream, UInt& ruiPOC, TComL
   if( bDecodeSubsetSPS )
   {
 	m_cEntropyDecoder.decodeSubsetSPS_MVC( &m_cSubsetSPS );
+	m_cMultiView.openMultiView( m_cSubsetSPS.getNumViewsMinusOne()+1, 0, m_cSubsetSPS.getWidth(), m_cSubsetSPS.getHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
+	m_acListPic = new TComList<TComPic*>[m_cSubsetSPS.getNumViewsMinusOne()+1];
 	m_uiValidPS |= 4;
   }
   //} [KSI] - ~MVC
@@ -220,17 +325,19 @@ Void TDecTop::decode (Bool bEos, TComBitstream* pcBitstream, UInt& ruiPOC, TComL
  
   // make sure we already received both parameter sets
   //{ [KSI] - MVC
-  if(bDecodeSliceLayerExtension || bDecodeSlicePrefix) assert( 7 == m_uiValidPS );
+  if(m_cSubsetSPS.getMVC())
+	  assert( 7 == m_uiValidPS );
   //} [KSI] - ~MVC
-  else                                                 assert( 3 == m_uiValidPS );
+  else
+	  assert( 3 == m_uiValidPS );
   
   m_apcSlicePilot->initSlice();
   
   //  Read slice header
   //{ [KSI] - MVC
-  if(bDecodeSliceLayerExtension || bDecodeSlicePrefix) m_apcSlicePilot->setSPS( &m_cSubsetSPS );
+  if(m_cSubsetSPS.getMVC()) m_apcSlicePilot->setSPS( &m_cSubsetSPS );
   //} [KSI] - ~MVC
-  else                                                 m_apcSlicePilot->setSPS( &m_cSPS );
+  else                      m_apcSlicePilot->setSPS( &m_cSPS );
 
   m_apcSlicePilot->setPPS( &m_cPPS );
 
@@ -243,15 +350,10 @@ Void TDecTop::decode (Bool bEos, TComBitstream* pcBitstream, UInt& ruiPOC, TComL
   //} [KSI] - ~MVC
 
   //{ [KSI] - MVC
-  if( bDecodeSliceLayerExtension )
-  {
-	  m_cEntropyDecoder.decodeSliceExtensionHeader(m_apcSlicePilot);
-	  return;
-  }
+  if( bDecodeSliceLayerExtension ) m_cEntropyDecoder.decodeSliceExtensionHeader(m_apcSlicePilot);
   //} [KSI] - ~MVC
-  else
-	  m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot);
-  
+  else                             m_cEntropyDecoder.decodeSliceHeader (m_apcSlicePilot);
+
   // Buffer initialize for prediction.
   m_cPrediction.initTempBuff();
   //  Get a new picture buffer
@@ -270,7 +372,12 @@ Void TDecTop::decode (Bool bEos, TComBitstream* pcBitstream, UInt& ruiPOC, TComL
   pcPic->getPicSym()->setSlice(pcSlice);
   
   // Set reference list
-  pcSlice->setRefPicList( m_cListPic );
+  //{ [KSI] - MVC
+  UInt uiViewIndex = xGetViewIndex(pcSlice);
+  xPrepareInterViewPrediction(pcSlice);
+  pcSlice->setRefPicList(m_acListPic[uiViewIndex]);
+  xSetInterViewRefPicList(pcSlice);
+  //} [KSI] - ~MVC
   
   // HierP + GPB case
   if ( m_cSPS.getUseLDC() && pcSlice->isInterB() )
@@ -323,11 +430,14 @@ Void TDecTop::decode (Bool bEos, TComBitstream* pcBitstream, UInt& ruiPOC, TComL
   //  Decode a picture
   m_cGopDecoder.decompressGop ( bEos, pcBitstream, pcPic );
   
-  pcSlice->sortPicList(m_cListPic);       //  sorting for application output
+  pcSlice->sortPicList(m_acListPic[uiViewIndex]);       //  sorting for application output
   
   ruiPOC = pcPic->getSlice()->getPOC();
   
-  rpcListPic = &m_cListPic;
+  //{ [KSI] - MVC
+  rpcListPic = &m_acListPic[uiViewIndex];
+  m_cMultiView.addMultiViewPicture(uiViewIndex, pcPic->getPicYuvRec(), pcPic->getPOC(), false);
+  //} [KSI] - ~MVC
   
   m_cCuDecoder.destroy();
   

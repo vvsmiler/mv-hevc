@@ -533,12 +533,12 @@ Void TEncCavlc::codeSubsetSPS_MVC( TComSPS* pcSPS )
 	//{ [KSI] - MVC
 	xWriteFlag( 1 ); // MVC FLAG
 	xWriteUvlc( pcSPS->getNumViewsMinusOne() );
-	for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
+	for ( UInt i = 0; i <= pcSPS->getNumViewsMinusOne(); i++ )
 	{
 		xWriteUvlc( pcSPS->getViewOrder()[i] );
 	}
 
-	for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
+	for ( UInt i = 0; i <= pcSPS->getNumViewsMinusOne(); i++ )
 	{
 		xWriteUvlc( pcSPS->getNumAnchorRefsL0()[i] );
 		for ( UInt j = 0; j < pcSPS->getNumAnchorRefsL0()[i]; j++ )
@@ -552,7 +552,7 @@ Void TEncCavlc::codeSubsetSPS_MVC( TComSPS* pcSPS )
 		}
 	}
 
-	for ( UInt i = 0; i < pcSPS->getNumViewsMinusOne(); i++ )
+	for ( UInt i = 0; i <= pcSPS->getNumViewsMinusOne(); i++ )
 	{
 		xWriteUvlc( pcSPS->getNumNonAnchorRefsL0()[i] );
 		for ( UInt j = 0; j < pcSPS->getNumNonAnchorRefsL0()[i]; j++ )
