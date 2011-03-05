@@ -132,6 +132,7 @@ Void TAppDecTop::decode()
     
     if( pcListPic )
     {
+	  //{ [KSI] - MVC
 	  if (m_acTVideoIOYuvReconFile == NULL)
 	  {
 		  UInt uiNumOfViews = (*pcListPic->begin())->getPicSym()->getSlice()->getSPS()->getNumViewsMinusOne() + 1;
@@ -149,6 +150,7 @@ Void TAppDecTop::decode()
 			  m_aiPOCLastDisplay[i] = -1;
 		  }
 	  }
+	  //} [KSI] - ~MVC
       // write reconstruction to file
       xWriteOutput( pcListPic, bAlloc );
     }
