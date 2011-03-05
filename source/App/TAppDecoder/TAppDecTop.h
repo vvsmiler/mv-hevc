@@ -64,11 +64,15 @@ private:
 #else
   TVideoIOBits                    m_cTVideoIOBitstreamFile;       ///< file I/O class
 #endif
+  //{ [KSI] - MVC
   TVideoIOYuv*                    m_acTVideoIOYuvReconFile;       ///< reconstruction YUV class
+  //} [KSI] - ~MVC
   
   // for output control
   Bool                            m_abDecFlag[ MAX_GOP ];         ///< decoded flag in one GOP
+  //{ [KSI] - MVC
   Int*                            m_aiPOCLastDisplay;             ///< last POC in display order
+  //} [KSI] - ~MVC
   
   // temporary buffer for IBDI
   TComPicYuv                      m_cTempPicYuv;                  ///< temporary buffer for IBDI

@@ -87,7 +87,7 @@ Void TEncEntropy::encodeSPS( TComSPS* pcSPS )
   return;
 }
 
-//{ [KSI] - MMVC
+//{ [KSI] - MVC
 Void TEncEntropy::encodeSubsetSPS_MVC( TComSPS* pcSPS )
 {
 	m_pcEntropyCoderIf->codeSubsetSPS_MVC(pcSPS);
