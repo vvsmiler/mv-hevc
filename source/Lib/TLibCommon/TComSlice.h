@@ -440,7 +440,9 @@ public:
   Void      setDepth            ( Int iDepth )                  { m_iDepth            = iDepth; }
   
   Void      setRefPicList       ( TComList<TComPic*>& rcListPic );
+  //{ [KSI] - MVC
   Void      setInterviewRefPicList( TComMultiView* pcMultiView, UInt uiPOCCurr, RefPicList e, Bool bAnchor );
+  //} [KSI] - ~MVC
   Void      setRefPOCList       ();
   Void      setColDir           ( UInt uiDir ) { m_uiColDir = uiDir; }
   
