@@ -420,6 +420,7 @@ Void TComSlice::setRefPicList       ( TComList<TComPic*>& rcListPic )
 }
 
 // [KSI] 여기에서 Multiview Referecne Picture를 pick up 한 다음 RefL0/RefL1에 설정한다.
+//{ [KSI] - MVC
 Void TComSlice::setInterviewRefPicList( TComMultiView* pcMultiView, UInt uiPOCCurr, RefPicList e, Bool bAnchor )
 {
 	UInt uiCurrentViewIndex;
@@ -483,6 +484,7 @@ Void TComSlice::setInterviewRefPicList( TComMultiView* pcMultiView, UInt uiPOCCu
 		setNumRefIdx( e, iNumRefIdx );
 	}
 }
+//} [KSI] - ~MVC
 
 Void TComSlice::initEqualRef()
 {
