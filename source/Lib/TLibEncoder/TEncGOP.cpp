@@ -105,6 +105,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
   TComPicYuv*     pcPicYuvRecOut;
   TComBitstream*  pcBitstreamOut;
   TComPicYuv      cPicOrg;
+  int             arrTimeOffset[5] = { 15, 8, 4, 2, 1 };
   //stats
   // [KSI] 이 변수는 쓸데 없이 존재 한다. 지우고 싶으나, 일단 놔둔다.
   TComBitstream*  pcOut = new TComBitstream;
@@ -114,6 +115,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
   // [KSI] 특이한점은 m_iHrchDepth에 실제 depth+1을 설정한다.
   // [KSI] 아래의 parameter중 iPOCLast만 사용한다. 나머지는 쓸데 없이 존재 한다. 지우고 싶으나, 일단 놔둔다.
   xInitGOP( iPOCLast, iNumPicRcvd, rcListPic, rcListPicYuvRecOut );
+
+  //{ [KSI] - Special GOP
+  if ( (iPOCLast != 0) && (m_iGopSize == 15) )
+	  m_iHrchDepth = 5;
+  //} [KSI] - ~Special GOP
   
   m_iNumPicCoded = 0;
   for ( Int iDepth = 0; iDepth < m_iHrchDepth; iDepth++ )
@@ -122,6 +128,15 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 	                                                        // 예2) GOP가 8인, Depth가 1인 경우 iTimeOffset = ( 1 << (4 - 1 - 1) ) = 4
     Int iStep       = iTimeOffset << 1;                     // 예1) 위의 경우, 16
 	                                                        // 예2) 위의 경우, 8
+
+	//{ [KSI] - Special GOP
+	if ( (iPOCLast != 0) && (m_iGopSize == 15) )
+	{
+		iTimeOffset = arrTimeOffset[iDepth];
+		iStep       = iTimeOffset << 1;
+	}
+	//} [KSI] - ~Special GOP
+
     
     // generalized B info.
 	// [KSI] MVC는 해당 없음.
@@ -144,6 +159,11 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
       {
         continue;
       }
+
+	  //{ [KSI] - Special GOP
+	  if ( (iPOCLast != 0) && (m_iGopSize == 15) && (iDepth != 0) && (iTimeOffset == m_iGopSize) )
+		  continue;
+	  //} [KSI] - ~Special GOP
       
       /////////////////////////////////////////////////////////////////////////////////////////////////// Initial to start encoding
       UInt  uiPOCCurr = iPOCLast - (iNumPicRcvd - iTimeOffset); // 예1) iPOCLast는 8, iNumPicRcvd는 8, iTimeOffset은 8 POCCurr = 8 - (8 - 8) = 8
@@ -181,7 +201,7 @@ Void TEncGOP::compressGOP( Int iPOCLast, Int iNumPicRcvd, TComList<TComPic*>& rc
 	  // [KSI] 출력 : pcSlice; pcPic에서 할당한 TComSlice를 현재 상황에 맞게 설정.
 	  //            :          여기에서 SliceType을 설정하므로, Multiview의 BaseViewComponent가 아닌 경우
 	  //            :          Anchor Frame의 Type을 I에서 P/B로 강제 설정하는 처리를 추가 해야한다. 중요 중요 중요.
-      m_pcSliceEncoder->initEncSlice ( pcPic, iPOCLast, uiPOCCurr, iNumPicRcvd, iTimeOffset, iDepth, pcSlice );
+	  m_pcSliceEncoder->initEncSlice ( pcPic, iPOCLast, uiPOCCurr, iNumPicRcvd, iTimeOffset, ((m_iGopSize == 15) && (iDepth > 2)) ? iDepth-1 : iDepth, pcSlice );
       
       //  Set SPS
       pcSlice->setSPS( m_pcEncTop->getSPS() );
