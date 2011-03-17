@@ -37,6 +37,7 @@
 #include <cassert>
 #include <cstring>
 #include <string>
+#include <cmath>
 #include "TAppEncCfg.h"
 #include "../../App/TAppCommon/program_options_lite.h"
 
@@ -695,6 +696,21 @@ Bool TAppEncCfg::parseCfg( Int argc, Char* argv[] )
 // Private member functions
 // ====================================================================================================================
 
+//{ [KSI] - Special GOP
+UInt getLogFactor( Double r0, Double r1 )
+{
+	Double dLog2Factor  = log10( r1 / r0 ) / log10( 2.0 );
+	Double dRound       = floor( dLog2Factor + 0.5 );
+	Double dEpsilon     = 0.0001;
+
+	if( dLog2Factor-dEpsilon < dRound && dRound < dLog2Factor+dEpsilon )
+	{
+		return (UInt)(dRound);
+	}
+	return UINT_MAX;
+}
+//} [KSI] - ~Special GOP
+
 Void TAppEncCfg::xCheckParameter()
 {
   bool check_failed = false; /* abort if there is a fatal configuration problem */
@@ -704,7 +720,9 @@ Void TAppEncCfg::xCheckParameter()
   xConfirmPara( m_iFrameSkip < 0,                                                           "Frame Skipping must be more than 0" );
   xConfirmPara( m_iFrameToBeEncoded <= 0,                                                   "Total Number Of Frames encoded must be more than 1" );
   xConfirmPara( m_iGOPSize < 1 ,                                                            "GOP Size must be more than 1" );
-  xConfirmPara( m_iGOPSize > 1 && (m_iGOPSize != 15) && (m_iGOPSize % 2),                   "GOP Size must be a multiple of 2 or GOP Size must be 15, if GOP Size is greater than 1" );
+  //{ [KSI] - Special GOP
+  xConfirmPara( m_iGOPSize > 1 && (m_iGOPSize != 15) && (m_iGOPSize != 12) && (getLogFactor(1.0, m_iGOPSize) == UINT_MAX), "GOP Size must be a power of 2 or GOP Size must be 15 or GOP Size must be 12, if GOP Size is greater than 1" );
+  //} [KSI] - ~Special GOP
   xConfirmPara( (m_iIntraPeriod > 0 && m_iIntraPeriod < m_iGOPSize) || m_iIntraPeriod == 0, "Intra period must be more than GOP size, or -1 , not 0" );
   xConfirmPara( m_iQP < 0 || m_iQP > 51,                                                    "QP exceeds supported range (0 to 51)" );
   xConfirmPara( m_iLoopFilterAlphaC0Offset < -26 || m_iLoopFilterAlphaC0Offset > 26,        "Loop Filter Alpha Offset exceeds supported range (-26 to 26)" );
