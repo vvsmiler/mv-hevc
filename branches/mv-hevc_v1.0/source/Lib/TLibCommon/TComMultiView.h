@@ -50,6 +50,7 @@ public:
 protected:
 	TComPic* xGetBuffer( UInt uiViewIndex );
 	Void xScalePic( TComPic* pcPic );
+	Void xDeScalePic( TComPicYuv* pcPic, TComPicYuv* pcPicD );
 private:
 	Int                  m_iWidth;
 	Int                  m_iHeight;

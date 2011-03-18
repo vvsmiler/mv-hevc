@@ -52,14 +52,19 @@ Void TComMultiView::addMultiViewPicture( UInt uiViewIndex, TComPicYuv* pcPic, In
 	TComPic* pcPicFromList = xGetBuffer(uiViewIndex);
 	if ( (pcPicFromList != NULL) && (pcPic != NULL) )
 	{
-		pcPic->copyToPic(pcPicFromList->getPicYuvRec());
+		if ( !bBitIncrement )	xDeScalePic(pcPic, pcPicFromList->getPicYuvRec());
+		else					pcPic->copyToPic(pcPicFromList->getPicYuvRec());
+
 		pcPicFromList->getSlice()->setPOC(iPOC);
 		pcPicFromList->setReconMark(true);
-		pcPicFromList->getPicYuvRec()->setBorderExtension(false);
-		if ( g_uiBitIncrement && bBitIncrement )
+		if ( g_uiBitIncrement )
 		{
 			xScalePic( pcPicFromList );
 		}
+
+		pcPicFromList->getPicYuvRec()->setBorderExtension(false);
+		pcPicFromList->getPicYuvRec()->extendPicBorder();
+
 		for ( Int iAddr = 0; iAddr < pcPicFromList->getPicSym()->getNumberOfCUsInFrame(); iAddr++ )
 			pcPicFromList->getCU(iAddr)->initCU(pcPicFromList, iAddr);
 	}
@@ -144,6 +149,70 @@ Void TComMultiView::xScalePic( TComPic* pcPic )
 		{
 			pRec[x] <<= g_uiBitIncrement;
 		}
+		pRec += iStride;
+	}
+}
+
+Void TComMultiView::xDeScalePic( TComPicYuv* pcPic, TComPicYuv* pcPicD )
+{
+	Int     x, y;
+	Int     offset = (g_uiBitIncrement>0)?(1<<(g_uiBitIncrement-1)):0;
+
+	//===== calculate PSNR =====
+	Pel*  pRecD   = pcPicD->getLumaAddr();
+	Pel*  pRec    = pcPic->getLumaAddr();
+	Int   iStride = pcPic->getStride();
+	Int   iWidth  = pcPic->getWidth();
+	Int   iHeight = pcPic->getHeight();
+
+	for( y = 0; y < iHeight; y++ )
+	{
+		for( x = 0; x < iWidth; x++ )
+		{
+#if IBDI_NOCLIP_RANGE
+			pRecD[x] = ( pRec[x] + offset ) >> g_uiBitIncrement;
+#else
+			pRecD[x] = ClipMax( ( pRec[x] + offset ) >> g_uiBitIncrement );
+#endif
+		}
+		pRecD += iStride;
+		pRec += iStride;
+	}
+
+	iHeight >>= 1;
+	iWidth  >>= 1;
+	iStride >>= 1;
+	pRecD = pcPicD->getCbAddr();
+	pRec  = pcPic->getCbAddr();
+
+	for( y = 0; y < iHeight; y++ )
+	{
+		for( x = 0; x < iWidth; x++ )
+		{
+#if IBDI_NOCLIP_RANGE
+			pRecD[x] = ( pRec[x] + offset ) >> g_uiBitIncrement;
+#else
+			pRecD[x] = ClipMax( ( pRec[x] + offset ) >> g_uiBitIncrement );
+#endif
+		}
+		pRecD += iStride;
+		pRec += iStride;
+	}
+
+	pRecD = pcPicD->getCrAddr();
+	pRec  = pcPic->getCrAddr();
+
+	for( y = 0; y < iHeight; y++ )
+	{
+		for( x = 0; x < iWidth; x++ )
+		{
+#if IBDI_NOCLIP_RANGE
+			pRecD[x] = ( pRec[x] + offset ) >> g_uiBitIncrement;
+#else
+			pRecD[x] = ClipMax( ( pRec[x] + offset ) >> g_uiBitIncrement );
+#endif
+		}
+		pRecD += iStride;
 		pRec += iStride;
 	}
 }
