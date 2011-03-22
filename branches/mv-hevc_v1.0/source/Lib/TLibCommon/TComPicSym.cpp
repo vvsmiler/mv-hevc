@@ -35,6 +35,12 @@
 
 #include "TComPicSym.h"
 
+//{ [KSI] Memory Consumption
+UInt TComPicSym::m_iNumberOfPicSym = 0;
+UInt TComPicSym::m_iSizeOfTotalPicSym = 0;
+//} [KSI] ~Memory Consumption
+
+
 // ====================================================================================================================
 // Constructor / destructor / create / destroy
 // ====================================================================================================================
@@ -42,8 +48,11 @@
 Void TComPicSym::create  ( Int iPicWidth, Int iPicHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth )
 {
   UInt i;
-  
+
+  m_iSizeOfCurrentPicSym = 0;
+
   m_apcTComSlice      = new TComSlice;
+  m_iSizeOfCurrentPicSym += sizeof(TComSlice); // [KSI] Memory Consumption
   
   m_uhTotalDepth      = uiMaxDepth;
   m_uiNumPartitions   = 1<<(m_uhTotalDepth<<1);
@@ -66,8 +75,15 @@ Void TComPicSym::create  ( Int iPicWidth, Int iPicHeight, UInt uiMaxWidth, UInt 
   for ( i=0; i<m_uiNumCUsInFrame ; i++ )
   {
     m_apcTComDataCU[i] = new TComDataCU;
-    m_apcTComDataCU[i]->create( m_uiNumPartitions, m_uiMaxCUWidth, m_uiMaxCUHeight, false );
+	m_iSizeOfCurrentPicSym += sizeof(TComDataCU); // [KSI] Memory Consumption
+    m_iSizeOfCurrentPicSym += m_apcTComDataCU[i]->create( m_uiNumPartitions, m_uiMaxCUWidth, m_uiMaxCUHeight, false );
   }
+
+  //{ [KSI] Memory Consumption
+  m_iSizeOfTotalPicSym += m_iSizeOfCurrentPicSym;
+  m_iNumberOfPicSym++;
+  //printf("\n==>SYM[%03d] = %05dMB", m_iNumberOfPicSym, m_iSizeOfTotalPicSym>>20);
+  //} [KSI] ~Memory Consumption
 }
 
 Void TComPicSym::destroy()
@@ -85,5 +101,11 @@ Void TComPicSym::destroy()
   }
   delete [] m_apcTComDataCU;
   m_apcTComDataCU = NULL;
+
+  //{ [KSI] Memory Consumption
+  m_iSizeOfTotalPicSym -= m_iSizeOfCurrentPicSym;
+  m_iNumberOfPicSym--;
+  //printf("\n==>SYM[%03d] = %05dMB", m_iNumberOfPicSym, m_iSizeOfTotalPicSym>>20);
+  //} [KSI] ~Memory Consumption
 }
 

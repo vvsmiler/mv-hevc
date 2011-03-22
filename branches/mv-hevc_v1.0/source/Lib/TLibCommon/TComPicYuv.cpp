@@ -45,6 +45,11 @@
 
 #include "TComPicYuv.h"
 
+//{ [KSI] Memory Consumption
+UInt TComPicYuv::m_iNumberOfPicYuv = 0;
+UInt TComPicYuv::m_iSizeOfTotalPicYuv = 0;
+//} [KSI] ~Memory Consumption
+
 TComPicYuv::TComPicYuv()
 {
   m_apiPicBufY      = NULL;   // Buffer (including margin)
@@ -86,6 +91,16 @@ Void TComPicYuv::create( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt 
   m_apiPicBufY      = (Pel*)xMalloc( Pel, ( m_iPicWidth       + (m_iLumaMarginX  <<1)) * ( m_iPicHeight       + (m_iLumaMarginY  <<1)));
   m_apiPicBufU      = (Pel*)xMalloc( Pel, ((m_iPicWidth >> 1) + (m_iChromaMarginX<<1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY<<1)));
   m_apiPicBufV      = (Pel*)xMalloc( Pel, ((m_iPicWidth >> 1) + (m_iChromaMarginX<<1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY<<1)));
+
+  //{ [KSI] Memory Consumption
+  m_iSizeOfCurrentPicYuv = 0;
+  m_iSizeOfCurrentPicYuv += sizeof(Pel) * ( m_iPicWidth       + (m_iLumaMarginX  <<1)) * ( m_iPicHeight       + (m_iLumaMarginY  <<1));
+  m_iSizeOfCurrentPicYuv += sizeof(Pel) * ((m_iPicWidth >> 1) + (m_iChromaMarginX<<1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY<<1));
+  m_iSizeOfCurrentPicYuv += sizeof(Pel) * ((m_iPicWidth >> 1) + (m_iChromaMarginX<<1)) * ((m_iPicHeight >> 1) + (m_iChromaMarginY<<1));
+  m_iSizeOfTotalPicYuv += m_iSizeOfCurrentPicYuv;
+  m_iNumberOfPicYuv++;
+  //printf("\nYUV[%03d] = %05dMB", m_iNumberOfPicYuv, m_iSizeOfTotalPicYuv>>20);
+  //} [KSI] ~Memory Consumption
   
   m_piPicOrgY       = m_apiPicBufY + m_iLumaMarginY   * getStride()  + m_iLumaMarginX;
   m_piPicOrgU       = m_apiPicBufU + m_iChromaMarginY * getCStride() + m_iChromaMarginX;
@@ -105,6 +120,12 @@ Void TComPicYuv::destroy()
   if( m_apiPicBufY ){ xFree( m_apiPicBufY );    m_apiPicBufY = NULL; }
   if( m_apiPicBufU ){ xFree( m_apiPicBufU );    m_apiPicBufU = NULL; }
   if( m_apiPicBufV ){ xFree( m_apiPicBufV );    m_apiPicBufV = NULL; }
+
+  //{ [KSI] Memory Consumption
+  m_iSizeOfTotalPicYuv -= m_iSizeOfCurrentPicYuv;
+  m_iNumberOfPicYuv--;
+  //printf("\nYUV[%03d] = %05dMB", m_iNumberOfPicYuv, m_iSizeOfTotalPicYuv>>20);
+  //} [KSI] ~Memory Consumption
 }
 
 Void TComPicYuv::createLuma( Int iPicWidth, Int iPicHeight, UInt uiMaxCUWidth, UInt uiMaxCUHeight, UInt uiMaxCUDepth )

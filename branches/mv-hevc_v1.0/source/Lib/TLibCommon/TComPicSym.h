@@ -49,6 +49,13 @@
 /// picture symbol class
 class TComPicSym
 {
+public:
+  // ------------------------------------------------------------------------------------------------
+  //  [KSI] for measure memory consumption
+  // ------------------------------------------------------------------------------------------------
+  static UInt m_iNumberOfPicSym;
+  static UInt m_iSizeOfTotalPicSym;
+  UInt        m_iSizeOfCurrentPicSym;
 private:
   UInt          m_uiWidthInCU;
   UInt          m_uiHeightInCU;

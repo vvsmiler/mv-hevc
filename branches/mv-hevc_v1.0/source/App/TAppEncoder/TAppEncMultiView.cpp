@@ -91,7 +91,7 @@ Void TAppEncMultiView::generateMultiViewList( TComList<TComPicYuv*>& rcListMulti
 		pcPic->create( m_pcEncCfg->getSourceWidth(), m_pcEncCfg->getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
 		(*iter)->read( pcPic, aiPad	); // TODO : [KSI] read를 실패하는지 성공하는지 판단 할 방법이 없다.
 		if ( bAnchor ) rcListMultiView.pushBack(pcPic);
-		else           delete pcPic;
+		else           { pcPic->destroy(); delete pcPic; }
 		iter++;
 	}
 	
@@ -105,7 +105,7 @@ Void TAppEncMultiView::generateMultiViewList( TComList<TComPicYuv*>& rcListMulti
 		pcPic->create( m_pcEncCfg->getSourceWidth(), m_pcEncCfg->getSourceHeight(), g_uiMaxCUWidth, g_uiMaxCUHeight, g_uiMaxCUDepth );
 		(*iter)->read( pcPic, aiPad	); // TODO : [KSI] read를 실패하는지 성공하는지 판단 할 방법이 없다.
 		if ( !bAnchor ) rcListMultiView.pushBack(pcPic);
-		else            delete pcPic;
+		else            { pcPic->destroy(); delete pcPic; }
 		iter++;
 	}
 
