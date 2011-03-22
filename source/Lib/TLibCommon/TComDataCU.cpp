@@ -91,8 +91,14 @@ TComDataCU::~TComDataCU()
 {
 }
 
-Void TComDataCU::create(UInt uiNumPartition, UInt uiWidth, UInt uiHeight, Bool bDecSubCu)
+//{ [KSI] Memory Consumption
+//Void TComDataCU::create(UInt uiNumPartition, UInt uiWidth, UInt uiHeight, Bool bDecSubCu)
+UInt TComDataCU::create(UInt uiNumPartition, UInt uiWidth, UInt uiHeight, Bool bDecSubCu)
+//} [KSI] ~Memory Consumption
 {
+  //{ [KSI] Memory Consumption
+  UInt uiSize = 0;
+  //} [KSI] ~Memory Consumption
   m_bDecSubCu = bDecSubCu;
   
   m_pcPic              = NULL;
@@ -101,42 +107,45 @@ Void TComDataCU::create(UInt uiNumPartition, UInt uiWidth, UInt uiHeight, Bool b
   
   if ( !bDecSubCu )
   {
-    m_phQP               = (UChar*    )xMalloc(UChar,    uiNumPartition);
-    m_puhDepth           = (UChar*    )xMalloc(UChar,    uiNumPartition);
-    m_puhWidth           = (UChar*    )xMalloc(UChar,    uiNumPartition);
-    m_puhHeight          = (UChar*    )xMalloc(UChar,    uiNumPartition);
-    m_pePartSize         = (PartSize* )xMalloc(PartSize, uiNumPartition);
-    m_pePredMode         = (PredMode* )xMalloc(PredMode, uiNumPartition);
+    m_phQP               = (UChar*    )xMalloc(UChar,    uiNumPartition); uiSize += sizeof(UChar)*uiNumPartition; // [KSI] Memory Consumption
+    m_puhDepth           = (UChar*    )xMalloc(UChar,    uiNumPartition); uiSize += sizeof(UChar)*uiNumPartition; // [KSI] Memory Consumption
+    m_puhWidth           = (UChar*    )xMalloc(UChar,    uiNumPartition); uiSize += sizeof(UChar)*uiNumPartition; // [KSI] Memory Consumption
+    m_puhHeight          = (UChar*    )xMalloc(UChar,    uiNumPartition); uiSize += sizeof(UChar)*uiNumPartition; // [KSI] Memory Consumption
+    m_pePartSize         = (PartSize* )xMalloc(PartSize, uiNumPartition); uiSize += sizeof(PartSize)*uiNumPartition; // [KSI] Memory Consumption
+    m_pePredMode         = (PredMode* )xMalloc(PredMode, uiNumPartition); uiSize += sizeof(PredMode)*uiNumPartition; // [KSI] Memory Consumption
     
-    m_puiAlfCtrlFlag     = (UInt*  )xMalloc(UInt,   uiNumPartition);
+    m_puiAlfCtrlFlag     = (UInt*  )xMalloc(UInt,   uiNumPartition); uiSize += sizeof(UInt)*uiNumPartition; // [KSI] Memory Consumption
     
 #if HHI_MRG
-    m_pbMergeFlag        = (Bool*  )xMalloc(Bool,   uiNumPartition);
-    m_puhMergeIndex      = (UChar* )xMalloc(UChar,  uiNumPartition);
+    m_pbMergeFlag        = (Bool*  )xMalloc(Bool,   uiNumPartition); uiSize += sizeof(Bool)*uiNumPartition; // [KSI] Memory Consumption
+    m_puhMergeIndex      = (UChar* )xMalloc(UChar,  uiNumPartition); uiSize += sizeof(UChar)*uiNumPartition; // [KSI] Memory Consumption
 #endif
     
-    m_puhLumaIntraDir    = (UChar* )xMalloc(UChar,  uiNumPartition);
-    m_puhChromaIntraDir  = (UChar* )xMalloc(UChar,  uiNumPartition);
-    m_puhInterDir        = (UChar* )xMalloc(UChar,  uiNumPartition);
+    m_puhLumaIntraDir    = (UChar* )xMalloc(UChar,  uiNumPartition); uiSize += sizeof(UChar)*uiNumPartition; // [KSI] Memory Consumption
+    m_puhChromaIntraDir  = (UChar* )xMalloc(UChar,  uiNumPartition); uiSize += sizeof(UChar)*uiNumPartition; // [KSI] Memory Consumption
+    m_puhInterDir        = (UChar* )xMalloc(UChar,  uiNumPartition); uiSize += sizeof(UChar)*uiNumPartition; // [KSI] Memory Consumption
     
-    m_puhTrIdx           = (UChar* )xMalloc(UChar,  uiNumPartition);
+    m_puhTrIdx           = (UChar* )xMalloc(UChar,  uiNumPartition); uiSize += sizeof(UChar)*uiNumPartition; // [KSI] Memory Consumption
     
-    m_puhCbf[0]          = (UChar* )xMalloc(UChar,  uiNumPartition);
-    m_puhCbf[1]          = (UChar* )xMalloc(UChar,  uiNumPartition);
-    m_puhCbf[2]          = (UChar* )xMalloc(UChar,  uiNumPartition);
+    m_puhCbf[0]          = (UChar* )xMalloc(UChar,  uiNumPartition); uiSize += sizeof(UChar)*uiNumPartition; // [KSI] Memory Consumption
+    m_puhCbf[1]          = (UChar* )xMalloc(UChar,  uiNumPartition); uiSize += sizeof(UChar)*uiNumPartition; // [KSI] Memory Consumption
+    m_puhCbf[2]          = (UChar* )xMalloc(UChar,  uiNumPartition); uiSize += sizeof(UChar)*uiNumPartition; // [KSI] Memory Consumption
     
-    m_apiMVPIdx[0]       = (Int*   )xMalloc(Int,  uiNumPartition);
-    m_apiMVPIdx[1]       = (Int*   )xMalloc(Int,  uiNumPartition);
-    m_apiMVPNum[0]       = (Int*   )xMalloc(Int,  uiNumPartition);
-    m_apiMVPNum[1]       = (Int*   )xMalloc(Int,  uiNumPartition);
+    m_apiMVPIdx[0]       = (Int*   )xMalloc(Int,  uiNumPartition); uiSize += sizeof(Int)*uiNumPartition; // [KSI] Memory Consumption
+    m_apiMVPIdx[1]       = (Int*   )xMalloc(Int,  uiNumPartition); uiSize += sizeof(Int)*uiNumPartition; // [KSI] Memory Consumption
+    m_apiMVPNum[0]       = (Int*   )xMalloc(Int,  uiNumPartition); uiSize += sizeof(Int)*uiNumPartition; // [KSI] Memory Consumption
+    m_apiMVPNum[1]       = (Int*   )xMalloc(Int,  uiNumPartition); uiSize += sizeof(Int)*uiNumPartition; // [KSI] Memory Consumption
     
-    m_pcTrCoeffY         = (TCoeff*)xMalloc(TCoeff, uiWidth*uiHeight);
-    m_pcTrCoeffCb        = (TCoeff*)xMalloc(TCoeff, uiWidth*uiHeight/4);
-    m_pcTrCoeffCr        = (TCoeff*)xMalloc(TCoeff, uiWidth*uiHeight/4);
+    m_pcTrCoeffY         = (TCoeff*)xMalloc(TCoeff, uiWidth*uiHeight); uiSize += sizeof(TCoeff)*uiWidth*uiHeight; // [KSI] Memory Consumption
+    m_pcTrCoeffCb        = (TCoeff*)xMalloc(TCoeff, uiWidth*uiHeight/4); uiSize += sizeof(TCoeff)*uiWidth*uiHeight/4; // [KSI] Memory Consumption
+    m_pcTrCoeffCr        = (TCoeff*)xMalloc(TCoeff, uiWidth*uiHeight/4); uiSize += sizeof(TCoeff)*uiWidth*uiHeight/4; // [KSI] Memory Consumption
     
-    m_acCUMvField[0].create( uiNumPartition );
-    m_acCUMvField[1].create( uiNumPartition );
-    
+    m_acCUMvField[0].create( uiNumPartition ); uiSize += sizeof(TComMv)*uiNumPartition; // [KSI] Memory Consumption
+	                                           uiSize += sizeof(TComMv)*uiNumPartition; // [KSI] Memory Consumption
+                                               uiSize += sizeof(Int)*uiNumPartition; // [KSI] Memory Consumption
+    m_acCUMvField[1].create( uiNumPartition ); uiSize += sizeof(TComMv)*uiNumPartition; // [KSI] Memory Consumption
+	                                           uiSize += sizeof(TComMv)*uiNumPartition; // [KSI] Memory Consumption
+                                               uiSize += sizeof(Int)*uiNumPartition; // [KSI] Memory Consumption
   }
   else
   {
@@ -145,7 +154,7 @@ Void TComDataCU::create(UInt uiNumPartition, UInt uiWidth, UInt uiHeight, Bool b
   }
   
   // create pattern memory
-  m_pcPattern            = (TComPattern*)xMalloc(TComPattern, 1);
+  m_pcPattern            = (TComPattern*)xMalloc(TComPattern, 1); uiSize += sizeof(TComPattern)*1; // [KSI] Memory Consumption
   
   // create motion vector fields
   
@@ -156,6 +165,8 @@ Void TComDataCU::create(UInt uiNumPartition, UInt uiWidth, UInt uiHeight, Bool b
   
   m_apcCUColocated[0]  = NULL;
   m_apcCUColocated[1]  = NULL;
+
+  return uiSize;
 }
 
 Void TComDataCU::destroy()
