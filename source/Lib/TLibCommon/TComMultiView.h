@@ -44,11 +44,11 @@ public:
 public:
 	Void                openMultiView( UInt uiNumViews, Int iGOPSize, Int iWidth, Int iHeight, UInt uiMaxWidth, UInt uiMaxHeight, UInt uiMaxDepth );
 	Void                closeMultiView( Void );
-	Void                addMultiViewPicture( UInt uiViewIndex, TComPicYuv* pcPic, Int iPOC, Bool bBitIncrement = true );
+	Void                addMultiViewPicture( UInt uiViewIndex, TComPicYuv* pcPic, Int iPOC, Bool bEncoding = true );
 	TComPic*            getMultiViewPicture( UInt uiViewIndex, UInt uiPOC );
 	Void                setGOPSize( Int iGOPSize ) { m_iGOPSize = iGOPSize; }
 protected:
-	TComPic* xGetBuffer( UInt uiViewIndex );
+	TComPic* xGetBuffer( UInt uiViewIndex, Bool bEncoding );
 	Void xScalePic( TComPic* pcPic );
 	Void xDeScalePic( TComPicYuv* pcPic, TComPicYuv* pcPicD );
 private:

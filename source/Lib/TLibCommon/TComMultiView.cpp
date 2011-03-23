@@ -47,13 +47,13 @@ Void TComMultiView::closeMultiView( Void )
 	}
 }
 
-Void TComMultiView::addMultiViewPicture( UInt uiViewIndex, TComPicYuv* pcPic, Int iPOC, Bool bBitIncrement )
+Void TComMultiView::addMultiViewPicture( UInt uiViewIndex, TComPicYuv* pcPic, Int iPOC, Bool bEncoding )
 {
-	TComPic* pcPicFromList = xGetBuffer(uiViewIndex);
+	TComPic* pcPicFromList = xGetBuffer(uiViewIndex, bEncoding);
 	if ( (pcPicFromList != NULL) && (pcPic != NULL) )
 	{
-		if ( !bBitIncrement )	xDeScalePic(pcPic, pcPicFromList->getPicYuvRec());
-		else					pcPic->copyToPic(pcPicFromList->getPicYuvRec());
+		if ( !bEncoding )	xDeScalePic(pcPic, pcPicFromList->getPicYuvRec());
+		else				pcPic->copyToPic(pcPicFromList->getPicYuvRec());
 
 		pcPicFromList->getSlice()->setPOC(iPOC);
 		pcPicFromList->setReconMark(true);
@@ -86,14 +86,16 @@ TComPic* TComMultiView::getMultiViewPicture( UInt uiViewIndex, UInt uiPOC )
 	return pcRet;
 }
 
-TComPic* TComMultiView::xGetBuffer( UInt uiViewIndex )
+TComPic* TComMultiView::xGetBuffer( UInt uiViewIndex, Bool bEncoding )
 {
 	TComPic* pcRet = NULL;
 	if ( m_acListMultiView != NULL )
 	{
 		TComSlice::sortPicList(m_acListMultiView[uiViewIndex]);
 
-		if ( m_acListMultiView[uiViewIndex].size() >= (UInt)(m_iGOPSize + 1) )
+		UInt uiQueueSize = bEncoding ? (m_iGOPSize + 1) : 1;
+
+		if ( m_acListMultiView[uiViewIndex].size() >= uiQueueSize )
 		{
 			pcRet = m_acListMultiView[uiViewIndex].popFront();
 		}
