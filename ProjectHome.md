@@ -1,0 +1,1 @@
+This project is intended for implementation of multi-view video coding extension of high efficient video coding.
